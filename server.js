@@ -177,13 +177,16 @@ app.post('/api/login', async (req, res) => {
             const sitePass = (content.sitePassword || '').trim();
             const providedKey = (req.body.masterKey || '').trim();
 
-            if (sitePass !== '') {
-                if (providedKey !== sitePass) {
-                    console.log('❌ Admin Login Failed: Invalid Master Key');
-                    return res.json({ success: false, error: 'Invalid Site Master Key' });
-                }
-                console.log('✅ Master Key Verified');
+            if (sitePass === '') {
+                console.log('❌ Admin Login Failed: Site Master Key not configured');
+                return res.json({ success: false, error: 'Site Master Key not configured' });
             }
+
+            if (providedKey !== sitePass) {
+                console.log('❌ Admin Login Failed: Invalid Master Key');
+                return res.json({ success: false, error: 'Invalid Site Master Key' });
+            }
+            console.log('✅ Master Key Verified');
 
             // 2. Verify Credentials
             const isHardcodedAdmin = (cleanEmail === 'www.vlarya.com@gmail.com' && cleanPass === 'Arya172010');
@@ -411,7 +414,13 @@ app.get('/api/content', (req, res) => {
     fs.readFile(DATA_FILE, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ error: 'Failed to read data' });
 
-        const content = JSON.parse(data);
+        let content;
+        try {
+            content = JSON.parse(data);
+        } catch (parseError) {
+            console.error("Content Parse Error:", parseError);
+            return res.status(500).json({ error: 'Corrupted content data' });
+        }
 
         // Track analytics (simplified: increment on data fetch)
         // We only increment if NOT logged in as admin to keep it clean
@@ -431,6 +440,9 @@ app.post('/api/content', (req, res) => {
     if (req.signedCookies.admin_auth !== 'true') return res.status(401).json({ error: 'Unauthorized' });
 
     const newContent = req.body;
+    if (!newContent || typeof newContent !== 'object' || Array.isArray(newContent)) {
+        return res.status(400).json({ error: 'Invalid content payload' });
+    }
     fs.writeFile(DATA_FILE, JSON.stringify(newContent, null, 2), 'utf8', (err) => {
         if (err) return res.status(500).json({ error: 'Failed to save data' });
         res.json({ success: true, message: 'Content updated successfully' });
