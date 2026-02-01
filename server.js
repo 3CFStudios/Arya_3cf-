@@ -129,11 +129,15 @@ async function sendMailSafe(options) {
         console.log(`[MAIL] Skipping email for ${options?.to}: EMAIL_ENABLED is false.`);
         return;
     }
-    try {
-        await transporter.sendMail({
-            from: emailConfig.from,
-            ...options
-        });
+  try {
+  await transporter.sendMail({
+    from: emailConfig.from,
+    ...options
+  });
+} catch (error) {
+  console.error(`[MAIL] Error sending email to ${options?.to}:`, error);
+}
+
     if (!isEmailEnabled || !transporter) {
         console.log(`[MAIL] Skipping email for ${options?.to}: Email is disabled or not configured.`);
         return;
