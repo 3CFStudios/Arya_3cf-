@@ -344,16 +344,6 @@ function requireAdmin(req, res, next) {
 }
 
 
-function isValidObjectId(value) {
-    return mongoose.Types.ObjectId.isValid(value);
-}
-
-const authLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false
-});
 
 async function requireAuth(req, res, next) {
     const userId = req.signedCookies.user_id;
