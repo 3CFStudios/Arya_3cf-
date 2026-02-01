@@ -38,9 +38,17 @@ async function connectDB() {
 
   mongoose.set("strictQuery", true);
 
-  await mongoose.connect(uri, {
-    serverSelectionTimeoutMS: 10000
-  });
+  try {
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 10000
+    });
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (message.toLowerCase().includes("authentication failed") || message.toLowerCase().includes("bad auth")) {
+      throw new Error("Database authentication failed. Check MONGO_URI credentials.");
+    }
+    throw error;
+  }
 
   isConnected = true;
   console.log("✅ MongoDB connected");
