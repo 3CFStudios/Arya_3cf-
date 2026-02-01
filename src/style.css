@@ -185,6 +185,24 @@ nav {
   /* Hide underline for button-style link */
 }
 
+.nav-logout {
+  color: var(--color-secondary) !important;
+  border: 1px solid var(--color-secondary);
+  padding: 0.5rem 1.2rem;
+  border-radius: 4px;
+  transition: all 0.3s var(--transition-fast) !important;
+}
+
+.nav-logout:hover {
+  background: rgba(189, 0, 255, 0.1);
+  box-shadow: 0 0 15px rgba(189, 0, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.nav-logout::after {
+  display: none !important;
+}
+
 /* Hero Section */
 .hero {
   height: 100vh;
@@ -490,6 +508,13 @@ ul li:nth-child(5) {
   }
 
   .nav-login {
+    display: inline-block;
+    margin-top: 1rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-logout {
     display: inline-block;
     margin-top: 1rem;
     width: 100%;
