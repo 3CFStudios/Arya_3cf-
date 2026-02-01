@@ -345,23 +345,6 @@ function requireAdmin(req, res, next) {
 
 
 
-async function requireAuth(req, res, next) {
-    const userId = req.signedCookies.user_id;
-    if (!userId || !isValidObjectId(userId)) {
-        return res.status(401).json({ success: false, error: 'Not authenticated' });
-    }
-    const user = await db.User.findById(userId).lean();
-    if (!user) {
-        return res.status(401).json({ success: false, error: 'Not authenticated' });
-    }
-    req.user = user;
-    next();
-}
-
-
-    next();
-}
-
 function requireSelfOrAdmin(req, res, next) {
     if (req.user?.isAdmin) return next();
     if (req.user && req.user._id.toString() === req.params.id) return next();
