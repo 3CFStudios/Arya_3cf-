@@ -133,6 +133,13 @@
             display: none;
         }
 
+        #info-msg {
+            color: #bbb;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            display: none;
+        }
+
         .back-link {
             display: inline-block;
             margin-top: 1.5rem;
@@ -153,6 +160,23 @@
             color: #00f3ff;
             cursor: pointer;
             text-decoration: underline;
+        }
+
+        .helper-links {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .link-btn {
+            background: transparent;
+            color: #00f3ff;
+            border: none;
+            padding: 0;
+            font-size: 0.75rem;
+            text-decoration: underline;
+            cursor: pointer;
         }
 
         .hidden {
@@ -201,14 +225,20 @@
             </div>
 
             <div class="form-group hidden" id="master-key-group">
-                <label>Master Key (Site Password)</label>
-                <input type="password" id="master-key" placeholder="Enter Site Master Key">
+                <label>Master Key</label>
+                <input type="password" id="master-key" placeholder="Enter admin master key">
             </div>
 
             <button type="submit" id="submit-btn">Login</button>
 
             <p id="error-msg"></p>
             <p id="success-msg"></p>
+            <p id="info-msg"></p>
+
+            <div class="helper-links" id="auth-helpers">
+                <button class="link-btn" type="button" id="resend-btn">Resend verification</button>
+                <button class="link-btn" type="button" id="forgot-btn">Forgot password?</button>
+            </div>
 
             <span class="toggle-link" id="toggle-auth" onclick="toggleAuthMode()">Don't have an account? Sign Up</span>
         </form>
@@ -234,16 +264,21 @@
                 nameGroup.classList.add('hidden');
                 document.getElementById('name').removeAttribute('required');
                 document.getElementById('master-key-group').classList.remove('hidden');
+                document.getElementById('master-key').setAttribute('required', 'true');
                 btn.innerText = 'Login as Admin';
                 btn.style.background = "#00f3ff";
+                document.getElementById('auth-helpers').style.display = 'none';
             } else {
                 toggle.style.display = 'block'; // Signup avail for user
-                document.getElementById('master-key-group').classList.add('hidden');
                 btn.innerText = 'Login';
                 btn.style.background = "#bd00ff";
+                document.getElementById('auth-helpers').style.display = 'flex';
+                document.getElementById('master-key-group').classList.add('hidden');
+                document.getElementById('master-key').removeAttribute('required');
             }
 
             document.getElementById('error-msg').style.display = 'none';
+            document.getElementById('info-msg').style.display = 'none';
         }
 
         function toggleAuthMode() {
@@ -292,14 +327,17 @@
 
             const errorMsg = document.getElementById('error-msg');
             const successMsg = document.getElementById('success-msg');
+            const infoMsg = document.getElementById('info-msg');
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
+            infoMsg.style.display = 'none';
 
             const endpoint = (mode === 'register') ? '/api/register' : '/api/login';
 
             try {
                 const res = await fetch(endpoint, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, type, name, masterKey })
                 });
@@ -320,6 +358,10 @@
                 } else {
                     errorMsg.innerText = data.error || 'Request Failed';
                     errorMsg.style.display = 'block';
+                    if (data.canResend) {
+                        infoMsg.innerText = 'Need a new verification email? Click "Resend verification".';
+                        infoMsg.style.display = 'block';
+                    }
                 }
             } catch (err) {
                 errorMsg.innerText = 'Network Error';
@@ -327,15 +369,52 @@
             }
         });
 
+        document.getElementById('resend-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const infoMsg = document.getElementById('info-msg');
+            infoMsg.style.display = 'none';
+            const res = await fetch('/api/resend-verification', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            infoMsg.innerText = data.message || 'If the account exists, a verification email has been sent.';
+            infoMsg.style.display = 'block';
+        });
+
+        document.getElementById('forgot-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const infoMsg = document.getElementById('info-msg');
+            infoMsg.style.display = 'none';
+            const res = await fetch('/api/forgot-password', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            infoMsg.innerText = data.message || 'If the account exists, a reset email has been sent.';
+            infoMsg.style.display = 'block';
+        });
+
         // Init
         const params = new URLSearchParams(window.location.search);
         const tabParam = params.get('tab');
+        const verifiedParam = params.get('verified');
 
         if (tabParam === 'admin') {
             switchTab('admin');
         } else {
             switchTab('user');
-        } 
+        }
+
+        if (verifiedParam === '1') {
+            const successMsg = document.getElementById('success-msg');
+            successMsg.innerText = 'Email verified! You can log in now.';
+            successMsg.style.display = 'block';
+        }
     </script>
 </body>
 

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arya | Blog Post</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      margin: 0;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.12), transparent 70%);
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .hero-image {
+      width: 100%;
+      border-radius: 1rem;
+      margin: 1.5rem 0;
+      max-height: 360px;
+      object-fit: cover;
+    }
+
+    .meta {
+      color: #888;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .content {
+      line-height: 1.8;
+      color: #ddd;
+      white-space: pre-wrap;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #666;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="post-title">Loading...</h1>
+    <div class="meta" id="post-meta"></div>
+    <img id="post-image" class="hero-image" src="" alt="" style="display:none;">
+    <div id="post-video"></div>
+    <div class="content" id="post-content"></div>
+    <a href="/blog.html" class="back-link">&larr; Back to Blog</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('slug');
+
+    async function loadPost() {
+      if (!slug) {
+        document.getElementById('post-title').innerText = 'Post not found';
+        return;
+      }
+      const res = await fetch(`/api/blog/${slug}`);
+      const data = await res.json();
+      if (!data.success) {
+        document.getElementById('post-title').innerText = data.error || 'Post not found';
+        return;
+      }
+      const post = data.post;
+      document.getElementById('post-title').innerText = post.title;
+      document.getElementById('post-meta').innerText = new Date(post.createdAt).toLocaleDateString();
+      if (post.imageUrl) {
+        const img = document.getElementById('post-image');
+        img.src = post.imageUrl;
+        img.alt = post.title;
+        img.style.display = 'block';
+      }
+      if (post.videoUrl) {
+        const video = document.getElementById('post-video');
+        video.innerHTML = `<div style="margin:1.5rem 0; position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:12px;">
+          <iframe src="${post.videoUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe>
+        </div>`;
+      }
+      document.getElementById('post-content').innerText = post.content || '';
+    }
+
+    loadPost();
+  </script>
+</body>
+</html>

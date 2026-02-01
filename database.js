@@ -1,7 +1,13 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 let isConnected = false;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /* -------------------- MODELS -------------------- */
 
@@ -10,11 +16,48 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, unique: true, index: true, required: true },
     password: { type: String },
     name: { type: String },
-    avatar: { type: String },
+    avatarUrl: { type: String },
+    bio: { type: String },
     isAdmin: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
+    verificationTokenHash: { type: String },
+    verificationTokenExpiresAt: { type: Date },
+    verificationTokenSentAt: { type: Date },
+    resetTokenHash: { type: String },
+    resetTokenExpiresAt: { type: Date },
+    lastLoginAt: { type: Date },
+    lastLoginIP: { type: String },
+    lastLoginUserAgent: { type: String },
+    followersCount: { type: Number, default: 0 },
+    followingCount: { type: Number, default: 0 }
+  },
+  { timestamps: true, collection: "users" }
+);
+
+const FollowSchema = new mongoose.Schema(
+  {
+    followerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    followingId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     createdAt: { type: Date, default: Date.now }
   },
-  { collection: "users" }
+  { collection: "follows" }
+);
+
+FollowSchema.index({ followerId: 1, followingId: 1 }, { unique: true });
+
+const BlogPostSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    summary: { type: String, required: true },
+    content: { type: String, required: true },
+    imageUrl: { type: String },
+    videoUrl: { type: String },
+    tags: { type: [String], default: [] },
+    slug: { type: String, unique: true, index: true },
+    status: { type: String, enum: ["published", "draft"], default: "draft" },
+    authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+  },
+  { timestamps: true, collection: "blog_posts" }
 );
 
 const ContentSchema = new mongoose.Schema(
@@ -25,8 +68,10 @@ const ContentSchema = new mongoose.Schema(
   { timestamps: true, collection: "content" }
 );
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-const Content = mongoose.models.Content || mongoose.model("Content", ContentSchema);
+export const User = mongoose.models.User || mongoose.model("User", UserSchema);
+export const Follow = mongoose.models.Follow || mongoose.model("Follow", FollowSchema);
+export const BlogPost = mongoose.models.BlogPost || mongoose.model("BlogPost", BlogPostSchema);
+export const Content = mongoose.models.Content || mongoose.model("Content", ContentSchema);
 
 /* -------------------- CONNECT -------------------- */
 
@@ -60,7 +105,7 @@ async function connectDB() {
 /* -------------------- SEEDING -------------------- */
 
 async function ensureAdmin() {
-  const adminEmail = "www.vlarya.com@gmail.com";
+  const adminEmail = process.env.ADMIN_EMAIL || "www.vlarya.com@gmail.com";
 
   // IMPORTANT: set ADMIN_PASSWORD in Render env vars
   // Do NOT hardcode passwords in code.
@@ -78,6 +123,7 @@ async function ensureAdmin() {
       email: adminEmail,
       name: "Arya (Admin)",
       isAdmin: true,
+      isVerified: true,
       password: adminHash
     });
     console.log("✅ Admin account initialized.");
@@ -87,7 +133,7 @@ async function ensureAdmin() {
       const adminHash = existing.password || (await bcrypt.hash(adminPlain, 10));
       await User.updateOne(
         { email: adminEmail },
-        { $set: { password: adminHash, isAdmin: true } }
+        { $set: { password: adminHash, isAdmin: true, isVerified: true } }
       );
       console.log("✅ Admin account repaired.");
     }
@@ -97,12 +143,21 @@ async function ensureAdmin() {
 async function ensureContentSeed() {
   const doc = await Content.findOne({ key: "site_content" }).lean();
   if (!doc) {
+    const seedPath = path.join(__dirname, "content.json");
+    let seedValue = {
+      sitePassword: "",
+      analytics: { totalViews: 0 }
+    };
+    if (fs.existsSync(seedPath)) {
+      try {
+        seedValue = JSON.parse(fs.readFileSync(seedPath, "utf8"));
+      } catch (error) {
+        console.warn("⚠️ Failed to parse content.json seed, using defaults.");
+      }
+    }
     await Content.create({
       key: "site_content",
-      value: {
-        sitePassword: "",
-        analytics: { totalViews: 0 }
-      }
+      value: seedValue
     });
     console.log("✅ Content initialized in Mongo.");
   }
@@ -117,12 +172,15 @@ export async function findUserByEmail(email) {
 
 export async function createUser(profile) {
   await connectDB();
-  const { name, email, password } = profile;
+  const { name, email, password, isVerified = false, avatarUrl = "", bio = "" } = profile;
 
   const created = await User.create({
     email,
     name,
     password,
+    avatarUrl,
+    bio,
+    isVerified,
     isAdmin: false
   });
 

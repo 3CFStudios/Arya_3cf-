@@ -109,18 +109,7 @@
             ]
         }
     ],
-    "blog": [
-        {
-            "title": "Why I Build My Own Systems",
-            "summary": "I believe building from scratch teaches you more than using black-box tools."
-        },
-        {
-            "title": "AI in Games",
-            "summary": "Thoughts on how AI is changing gameplay and development.",
-            "content": "",
-            "video": ""
-        }
-    ],
+    "blog": [],
     "contact": {
         "title": "Let's Talk",
         "subtitle": "Want to collaborate or just talk tech?",
@@ -157,6 +146,5 @@
     },
     "analytics": {
         "totalViews": 22
-    },
-    "sitePassword": "Arya172010"
+    }
 }

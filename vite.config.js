@@ -14,6 +14,10 @@ export default defineConfig({
         admin: resolve(__dirname, 'admin/index.html'),
         login: resolve(__dirname, 'login.html'),
         account: resolve(__dirname, 'account.html'),
+        profile: resolve(__dirname, 'profile.html'),
+        blog: resolve(__dirname, 'blog.html'),
+        blogPost: resolve(__dirname, 'blog-post.html'),
+        reset: resolve(__dirname, 'reset.html'),
       }
     },
     outDir: 'dist'
