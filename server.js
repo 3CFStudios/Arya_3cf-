@@ -368,10 +368,7 @@ async function requireAuth(req, res, next) {
     next();
 }
 
-function requireAdmin(req, res, next) {
-    if (!req.user?.isAdmin) {
-        return res.status(403).json({ success: false, error: 'Admin only' });
-    }
+
     next();
 }
 
