@@ -11,10 +11,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        admin: resolve(__dirname, 'admin/index.html'),
-        login: resolve(__dirname, 'login.html')
-      }
+        login: resolve(__dirname, 'login.html'),
+        admin: resolve(__dirname, 'admin/index.html'), // admin page entry
+      },
     },
-    outDir: 'dist'
-  }
+    outDir: 'dist',
+  },
 });
