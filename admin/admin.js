@@ -1,5 +1,31 @@
 let contentData = {};
 
+async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+        credentials: 'include',
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+        },
+    });
+
+    let data = null;
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+        data = await res.json().catch(() => null);
+    } else {
+        const text = await res.text().catch(() => '');
+        data = { success: false, error: text?.slice(0, 200) || 'Non-JSON response' };
+    }
+
+    if (!res.ok) {
+        const msg = (data && (data.error || data.message)) ? (data.error || data.message) : `HTTP ${res.status}`;
+        throw new Error(msg);
+    }
+
+    return data;
+}
+
 // --- INIT ---
 async function init() {
     // Server guarantees auth now, so just load data
@@ -7,15 +33,14 @@ async function init() {
 }
 
 async function logout() {
-    await fetch('/api/logout', { method: 'POST' });
+    await apiFetch('/api/logout', { method: 'POST' });
     window.location.href = '/login.html'; // Redirect to login
 }
 
 // --- DATA LOADING & FORM ---
 
 async function loadData() {
-    const res = await fetch('/api/content');
-    contentData = await res.json();
+    contentData = await apiFetch('/api/content');
     populateForms();
 }
 
@@ -87,16 +112,7 @@ window.renderUsers = async function () {
 
     console.log("DEBUG: renderUsers() triggered. Fetching from /api/admin/users...");
     try {
-        const res = await fetch('/api/admin/users');
-        console.log("DEBUG: Fetch status:", res.status);
-
-        if (!res.ok) {
-            console.error("DEBUG: API request failed with status:", res.status);
-            container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:#ff4444;">Failed to load users (Status ${res.status}).</td></tr>`;
-            return;
-        }
-
-        const data = await res.json();
+        const data = await apiFetch('/api/admin/users');
         console.log("DEBUG: Parsed JSON data:", data);
 
         if (data.success && Array.isArray(data.users)) {
@@ -164,12 +180,11 @@ window.toggleUserRole = async function (userId, isAdmin) {
 
     if (confirm(`Are you sure you want to ${action}`)) {
         try {
-            const res = await fetch('/api/admin/users/update', {
+            const data = await apiFetch('/api/admin/users/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, updates: { isAdmin: newStatus } })
             });
-            const data = await res.json();
             if (data.success) {
                 console.log("DEBUG: Role updated successfully.");
                 window.renderUsers();
@@ -188,12 +203,11 @@ window.changeUserPassword = async function (userId) {
 
     if (confirm(`Overwrite password? This cannot be undone.`)) {
         try {
-            const res = await fetch('/api/admin/users/update', {
+            const data = await apiFetch('/api/admin/users/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, updates: { password: newPass } })
             });
-            const data = await res.json();
             if (data.success) {
                 alert("Password updated successfully!");
                 window.renderUsers();
@@ -458,19 +472,18 @@ window.saveContent = async () => {
     contentData.sitePassword = getValue('site-password');
 
     try {
-        const res = await fetch('/api/content', {
+        const result = await apiFetch('/api/content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(contentData)
         });
 
-        const result = await res.json();
-        if (res.ok && result.success) {
+        if (result.success) {
             alert('Saved successfully!');
             // Refresh dashboard stats after save
             updateDashboardStats();
         } else {
-            alert('Error: ' + (result.error || res.statusText));
+            alert('Error: ' + (result.error || 'Save failed'));
         }
     } catch (e) {
         console.error("Save error:", e);
@@ -627,8 +640,7 @@ window.fetchLogs = async function () {
     if (!container) return;
 
     try {
-        const res = await fetch('/api/admin/logs');
-        const data = await res.json();
+        const data = await apiFetch('/api/admin/logs');
 
         if (data.success && Array.isArray(data.logs)) {
             const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
@@ -663,12 +675,11 @@ window.handleConsoleSubmit = async function (event) {
 
 window.sendConsoleCommand = async function (command) {
     try {
-        const res = await fetch('/api/admin/console', {
+        const data = await apiFetch('/api/admin/console', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command })
         });
-        const data = await res.json();
         if (data.success) {
             window.fetchLogs();
         } else {
