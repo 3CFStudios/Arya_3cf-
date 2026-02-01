@@ -13,6 +13,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         admin: resolve(__dirname, 'admin/index.html'),
         login: resolve(__dirname, 'login.html'),
+        account: resolve(__dirname, 'account.html'),
       }
     },
     outDir: 'dist'
