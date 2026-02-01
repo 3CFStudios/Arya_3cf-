@@ -2,7 +2,7 @@
 // Fetch and populate content
 async function loadContent() {
     try {
-        const response = await fetch('/api/content');
+        const response = await fetch('/api/content', { credentials: 'include' });
         const data = await response.json();
 
         // Hero
@@ -103,36 +103,13 @@ async function loadContent() {
         // Blog
         const blogContainer = document.querySelector('#blog-container');
         blogContainer.innerHTML = '';
-        if (data.blog && Array.isArray(data.blog)) {
-            data.blog.forEach((post, index) => {
-                const content = post.content || 'Content coming soon...';
-
-                // Optional media (only show if URL provided)
+        const blogResponse = await fetch('/api/blog?limit=3');
+        const blogData = await blogResponse.json();
+        if (blogData.success && Array.isArray(blogData.items)) {
+            blogData.items.forEach((post, index) => {
                 let imageHtml = '';
-                let videoHtml = '';
-
-                if (post.image && post.image.trim() !== '') {
-                    imageHtml = `<img src="${post.image}" alt="${post.title}" style="width: 100%; border-radius: 8px; margin-top: 1rem; max-height: 300px; object-fit: cover;">`;
-                }
-
-                if (post.video && post.video.trim() !== '') {
-                    const getEmbedUrl = (url) => {
-                        if (url.includes('youtube.com/watch?v=')) {
-                            return url.replace('watch?v=', 'embed/');
-                        }
-                        if (url.includes('youtu.be/')) {
-                            return url.replace('youtu.be/', 'youtube.com/embed/');
-                        }
-                        if (url.includes('vimeo.com/')) {
-                            return url.replace('vimeo.com/', 'player.vimeo.com/video/');
-                        }
-                        return url;
-                    };
-
-                    const embedUrl = getEmbedUrl(post.video);
-                    videoHtml = `<div style="margin-top: 1rem; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
-                    <iframe src="${embedUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
-                </div>`;
+                if (post.imageUrl && post.imageUrl.trim() !== '') {
+                    imageHtml = `<img src="${post.imageUrl}" alt="${post.title}" style="width: 100%; border-radius: 8px; margin-top: 1rem; max-height: 300px; object-fit: cover;">`;
                 }
 
                 blogContainer.innerHTML += `
@@ -140,26 +117,10 @@ async function loadContent() {
                 <h3>${post.title}</h3>
                 <p style="margin-top: 1rem; color: #aaa;">${post.summary}</p>
                 ${imageHtml}
-                ${videoHtml}
-                <div id="blog-content-${index}" style="display: none; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--color-glass-border); color: #ddd; line-height: 1.6;">
-                    ${content}
-                </div>
-                <button class="btn" onclick="toggleBlog(${index})" style="margin-top: 1.5rem; padding: 0.5rem 1.5rem; font-size: 0.7rem;">Read More</button>
+                <a class="btn" href="/blog-post.html?slug=${post.slug}" style="margin-top: 1.5rem; padding: 0.5rem 1.5rem; font-size: 0.7rem; display: inline-block;">Read More</a>
             </div>`;
             });
         }
-
-        // Helper for Blog Toggle
-        window.toggleBlog = (index) => {
-            const el = document.getElementById(`blog-content-${index}`);
-            if (el.style.display === 'none') {
-                el.style.display = 'block';
-                event.target.innerText = 'Read Less';
-            } else {
-                el.style.display = 'none';
-                event.target.innerText = 'Read More';
-            }
-        };
 
         // Experience
         const expContainer = document.querySelector('#experience-list');
@@ -303,7 +264,7 @@ async function loadContent() {
 // Check Auth and Update Nav
 async function checkLoginStatus() {
     try {
-        const res = await fetch('/api/auth-status');
+        const res = await fetch('/api/auth-status', { credentials: 'include' });
         const data = await res.json();
 
         const mobileLogin = document.querySelector('.mobile-login');
@@ -330,7 +291,7 @@ async function checkLoginStatus() {
                     logoutLink.classList.add('nav-logout');
                     logoutLink.addEventListener('click', async (e) => {
                         e.preventDefault();
-                        await fetch('/api/logout', { method: 'POST' });
+                        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
                         window.location.reload();
                     });
                     logoutItem.appendChild(logoutLink);
@@ -346,7 +307,7 @@ async function checkLoginStatus() {
                 if (!mobileLogout.dataset.bound) {
                     mobileLogout.dataset.bound = 'true';
                     mobileLogout.addEventListener('click', async () => {
-                        await fetch('/api/logout', { method: 'POST' });
+                        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
                         window.location.reload();
                     });
                 }

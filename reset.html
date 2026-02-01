@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arya | Reset Password</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      background-image: radial-gradient(circle at 50% 50%, rgba(189, 0, 255, 0.12), transparent 70%);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 1.3rem;
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.9rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #333;
+      color: white;
+      border-radius: 4px;
+      font-family: inherit;
+      outline: none;
+      transition: 0.3s;
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      border-color: #bd00ff;
+      box-shadow: 0 0 10px rgba(189, 0, 255, 0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 0.9rem;
+      background: #bd00ff;
+      color: #050505;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #fff;
+    }
+
+    #error-msg {
+      color: #ff4444;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    #success-msg {
+      color: #00f3ff;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Reset Password</h1>
+    <form id="reset-form">
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="password" required placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirm" required placeholder="••••••••">
+      </div>
+      <button type="submit">Update Password</button>
+      <p id="error-msg"></p>
+      <p id="success-msg"></p>
+    </form>
+    <a href="/login.html" class="back-link">&larr; Back to Login</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    const errorMsg = document.getElementById('error-msg');
+    const successMsg = document.getElementById('success-msg');
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+      successMsg.style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      successMsg.textContent = msg;
+      successMsg.style.display = 'block';
+      errorMsg.style.display = 'none';
+    }
+
+    document.getElementById('reset-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm').value;
+
+      if (!token) {
+        showError('Missing reset token.');
+        return;
+      }
+      if (password !== confirm) {
+        showError('Passwords do not match.');
+        return;
+      }
+
+      const res = await fetch('/api/reset-password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showError(data.error || 'Reset failed.');
+        return;
+      }
+      showSuccess('Password updated. You can log in now.');
+    });
+  </script>
+</body>
+</html>

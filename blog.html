@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arya | Blog</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      margin: 0;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.1), transparent 70%);
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    input {
+      flex: 1;
+      min-width: 220px;
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-family: inherit;
+    }
+
+    button {
+      padding: 0.8rem 1.4rem;
+      border-radius: 6px;
+      border: none;
+      background: #00f3ff;
+      color: #050505;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 0.75rem;
+      margin-top: 1rem;
+      max-height: 200px;
+      object-fit: cover;
+    }
+
+    .card a {
+      display: inline-block;
+      margin-top: 1rem;
+      color: #00f3ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+      color: #aaa;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #666;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Blog</h1>
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Search by title">
+      <input type="text" id="tag" placeholder="Filter by tag">
+      <button type="button" id="search-btn">Search</button>
+    </div>
+
+    <div id="blog-grid" class="grid"></div>
+    <div class="pagination" id="pagination"></div>
+
+    <a href="/" class="back-link">&larr; Back to Website</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const page = parseInt(params.get('page') || '1', 10);
+    const q = params.get('q') || '';
+    const tag = params.get('tag') || '';
+
+    document.getElementById('search').value = q;
+    document.getElementById('tag').value = tag;
+
+    async function loadBlog() {
+      const query = new URLSearchParams({ page, q, tag });
+      const res = await fetch(`/api/blog?${query.toString()}`);
+      const data = await res.json();
+      const grid = document.getElementById('blog-grid');
+      grid.innerHTML = '';
+
+      if (!data.success || !data.items.length) {
+        grid.innerHTML = '<p style="color:#777;">No posts found.</p>';
+        return;
+      }
+
+      data.items.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>${post.title}</h3>
+          <p style="color:#aaa;">${post.summary}</p>
+          ${post.imageUrl ? `<img src="${post.imageUrl}" alt="${post.title}">` : ''}
+          <a href="/blog-post.html?slug=${post.slug}">Read full post →</a>
+        `;
+        grid.appendChild(card);
+      });
+
+      renderPagination(data.total, data.limit);
+    }
+
+    function renderPagination(total, limit) {
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+      const totalPages = Math.ceil(total / limit);
+      if (totalPages <= 1) return;
+      for (let i = 1; i <= totalPages; i += 1) {
+        const link = document.createElement('a');
+        link.href = `/blog.html?page=${i}&q=${encodeURIComponent(q)}&tag=${encodeURIComponent(tag)}`;
+        link.textContent = i;
+        link.style.color = i === page ? '#00f3ff' : '#777';
+        pagination.appendChild(link);
+      }
+    }
+
+    document.getElementById('search-btn').addEventListener('click', () => {
+      const nextQ = document.getElementById('search').value.trim();
+      const nextTag = document.getElementById('tag').value.trim();
+      window.location.href = `/blog.html?page=1&q=${encodeURIComponent(nextQ)}&tag=${encodeURIComponent(nextTag)}`;
+    });
+
+    loadBlog();
+  </script>
+</body>
+</html>

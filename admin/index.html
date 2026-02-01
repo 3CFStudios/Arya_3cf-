@@ -27,7 +27,7 @@
     <button onclick="showSection('skills')">🛠️ Skills</button>
     <button onclick="showSection('experience')">💼 Experience</button>
     <button onclick="showSection('achievements')">🏆 Achievements</button>
-    <button onclick="showSection('blog')">📝 Blog</button>
+    <button onclick="showSection('blogManager')">📝 Blog Manager</button>
     <button onclick="showSection('contact')">📬 Contact</button>
 
     <div class="nav-section">Customize</div>
@@ -174,14 +174,31 @@
           class="tall-textarea"></textarea></div>
     </div>
 
-    <!-- Blog -->
-    <div id="blog" class="section-editor">
+    <!-- Blog Manager -->
+    <div id="blogManager" class="section-editor">
       <header>
-        <h1>Blog Posts</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+        <h1>Blog Manager</h1>
+        <button class="save-btn" onclick="refreshBlogManager()">🔄 Refresh</button>
       </header>
-      <div id="blog-list"></div>
-      <button class="add-btn" onclick="addBlogPost()">➕ Add New Post</button>
+      <div class="form-group"><label>Title</label><input type="text" id="blog-title"></div>
+      <div class="form-group"><label>Summary</label><textarea id="blog-summary"></textarea></div>
+      <div class="form-group"><label>Content</label><textarea id="blog-content" style="min-height: 220px;"></textarea></div>
+      <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="blog-tags" placeholder="tech, build, release"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="blog-status">
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Image Upload (Cloudinary)</label><input type="file" id="blog-image" accept="image/*"></div>
+      <div class="form-group"><label>Or Image URL</label><input type="text" id="blog-image-url" placeholder="https://..."></div>
+      <div class="form-group"><label>Video URL (optional)</label><input type="text" id="blog-video-url" placeholder="https://youtube.com/..."></div>
+      <div class="form-group">
+        <button class="add-btn" onclick="submitBlogPost()">💾 Save Post</button>
+        <button class="add-btn" onclick="resetBlogForm()">🧹 Clear</button>
+      </div>
+      <h3 class="section-heading section-heading--spaced">Existing Posts</h3>
+      <div id="blog-manager-list"></div>
     </div>
 
     <!-- Contact -->

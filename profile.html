@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arya | Profile</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      margin: 0;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.1), transparent 70%);
+    }
+
+    .profile-card {
+      max-width: 720px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .header {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(0, 243, 255, 0.4);
+      background: rgba(255,255,255,0.05);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+
+    .bio {
+      margin-top: 1rem;
+      color: #ccc;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      color: #aaa;
+    }
+
+    .stats strong {
+      color: #fff;
+    }
+
+    .follow-btn {
+      background: #00f3ff;
+      color: #050505;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+    }
+
+    .follow-btn.secondary {
+      background: transparent;
+      color: #00f3ff;
+      border: 1px solid #00f3ff;
+    }
+
+    .list {
+      margin-top: 2rem;
+    }
+
+    .list h3 {
+      margin-bottom: 0.75rem;
+    }
+
+    .list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .list li {
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .list img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #666;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-card">
+    <div class="header">
+      <img id="profile-avatar" class="avatar" src="" alt="Avatar">
+      <div>
+        <h1 id="profile-name">Loading...</h1>
+        <div class="stats">
+          <span><strong id="followers-count">0</strong> followers</span>
+          <span><strong id="following-count">0</strong> following</span>
+        </div>
+      </div>
+      <button id="follow-btn" class="follow-btn" type="button">Follow</button>
+    </div>
+    <p id="profile-bio" class="bio"></p>
+
+    <div class="list">
+      <h3>Followers</h3>
+      <ul id="followers-list"></ul>
+    </div>
+
+    <div class="list">
+      <h3>Following</h3>
+      <ul id="following-list"></ul>
+    </div>
+
+    <a href="/" class="back-link">&larr; Back to Website</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
+    const followBtn = document.getElementById('follow-btn');
+
+    function renderList(listEl, items) {
+      listEl.innerHTML = '';
+      if (!items.length) {
+        listEl.innerHTML = '<li style="color:#777;">No users yet.</li>';
+        return;
+      }
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<img src="${item.avatarUrl || 'https://via.placeholder.com/32'}" alt="${item.name}"><span>${item.name}</span>`;
+        listEl.appendChild(li);
+      });
+    }
+
+    async function loadProfile() {
+      if (!userId) {
+        document.getElementById('profile-name').innerText = 'User not found';
+        followBtn.style.display = 'none';
+        return;
+      }
+      const res = await fetch(`/api/users/${userId}`);
+      const data = await res.json();
+      if (!data.success) {
+        document.getElementById('profile-name').innerText = data.error || 'User not found';
+        followBtn.style.display = 'none';
+        return;
+      }
+      const user = data.user;
+      document.getElementById('profile-name').innerText = user.name || 'Anonymous';
+      document.getElementById('profile-avatar').src = user.avatarUrl || 'https://via.placeholder.com/90';
+      document.getElementById('profile-bio').innerText = user.bio || 'No bio yet.';
+      document.getElementById('followers-count').innerText = user.followersCount || 0;
+      document.getElementById('following-count').innerText = user.followingCount || 0;
+
+      await checkIfSelf();
+      loadFollowState();
+      loadLists();
+    }
+
+    async function checkIfSelf() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.user?.id === userId) {
+          followBtn.style.display = 'none';
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    async function loadFollowState() {
+      try {
+        const res = await fetch(`/api/users/${userId}/is-following`, { credentials: 'include' });
+        if (!res.ok) {
+          followBtn.style.display = 'none';
+          return;
+        }
+        const data = await res.json();
+        if (data.isFollowing) {
+          followBtn.classList.add('secondary');
+          followBtn.textContent = 'Unfollow';
+        } else {
+          followBtn.classList.remove('secondary');
+          followBtn.textContent = 'Follow';
+        }
+      } catch (e) {
+        followBtn.style.display = 'none';
+      }
+    }
+
+    async function loadLists() {
+      const followersRes = await fetch(`/api/users/${userId}/followers?limit=5`);
+      const followingRes = await fetch(`/api/users/${userId}/following?limit=5`);
+      const followersData = await followersRes.json();
+      const followingData = await followingRes.json();
+      renderList(document.getElementById('followers-list'), followersData.items || []);
+      renderList(document.getElementById('following-list'), followingData.items || []);
+    }
+
+    followBtn.addEventListener('click', async () => {
+      const isUnfollow = followBtn.textContent.toLowerCase().includes('unfollow');
+      const method = isUnfollow ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/follow/${userId}`, { method, credentials: 'include' });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || 'Action failed');
+        return;
+      }
+      await loadProfile();
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

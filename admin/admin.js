@@ -1,4 +1,6 @@
 let contentData = {};
+let blogManagerState = { editingId: null, posts: [] };
+let blogStatsCount = 0;
 
 async function apiFetch(url, options = {}) {
     const res = await fetch(url, {
@@ -29,7 +31,8 @@ async function apiFetch(url, options = {}) {
 // --- INIT ---
 async function init() {
     // Server guarantees auth now, so just load data
-    loadData();
+    await loadData();
+    await loadBlogManager();
 }
 
 async function logout() {
@@ -90,7 +93,7 @@ function populateForms() {
         renderProjects();
         renderSkills();
         renderExperience();
-        renderBlog();
+        refreshBlogStats();
         renderSocials();
         renderCustomSections();
         renderSectionOrder();
@@ -234,11 +237,11 @@ function updateDashboardStats() {
     };
 
     setStat('stat-projects', contentData.projects?.length || 0);
-    setStat('stat-blog', contentData.blog?.length || 0);
+    setStat('stat-blog', blogStatsCount);
     setStat('stat-skills', contentData.skills?.length || 0);
     setStat('stat-socials', contentData.contact?.socials?.length || 0);
     setStat('overview-projects', contentData.projects?.length || 0);
-    setStat('overview-blog', contentData.blog?.length || 0);
+    setStat('overview-blog', blogStatsCount);
 
     // Add Total Views if stat card exists
     setStat('stat-views', contentData.analytics?.totalViews || 0);
@@ -296,22 +299,115 @@ function renderExperience() {
     });
 }
 
-function renderBlog() {
-    const container = document.getElementById('blog-list');
+async function loadBlogManager() {
+    try {
+        const data = await apiFetch('/api/admin/blog');
+        blogManagerState.posts = Array.isArray(data.items) ? data.items : [];
+        blogStatsCount = data.total || blogManagerState.posts.length;
+        renderBlogManager();
+        updateDashboardStats();
+    } catch (error) {
+        console.error('Blog manager load failed', error);
+    }
+}
+
+window.refreshBlogManager = async function () {
+    await loadBlogManager();
+};
+
+function renderBlogManager() {
+    const container = document.getElementById('blog-manager-list');
     if (!container) return;
     container.innerHTML = '';
-    if (!contentData.blog || !Array.isArray(contentData.blog)) return;
-    contentData.blog.forEach((post, index) => {
+    blogManagerState.posts.forEach((post) => {
         container.innerHTML += `
         <div class="item-list">
-            <div class="item-header"><strong>Post ${index + 1}</strong> <span class="delete-btn" onclick="deleteItem('blog', ${index})">Delete</span></div>
-            <div class="form-group"><label>Title</label><input type="text" onchange="updateArrayItem('blog', ${index}, 'title', this.value)" value="${post.title}"></div>
-            <div class="form-group"><label>Summary</label><textarea onchange="updateArrayItem('blog', ${index}, 'summary', this.value)">${post.summary}</textarea></div>
-            <div class="form-group"><label>Full Content (Expanded)</label><textarea onchange="updateArrayItem('blog', ${index}, 'content', this.value)" style="min-height: 150px;">${post.content || ''}</textarea></div>
-            <div class="form-group"><label>🖼️ Image URL (Optional)</label><input type="text" onchange="updateArrayItem('blog', ${index}, 'image', this.value)" value="${post.image || ''}" placeholder="https://example.com/image.jpg"></div>
-            <div class="form-group"><label>🎬 Video URL (Optional - YouTube/Vimeo embed)</label><input type="text" onchange="updateArrayItem('blog', ${index}, 'video', this.value)" value="${post.video || ''}" placeholder="https://www.youtube.com/embed/..."></div>
+            <div class="item-header"><strong>${post.title}</strong> <span class="delete-btn" onclick="deleteBlogPost('${post._id}')">Delete</span></div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; font-size:0.85rem; color:#999;">
+                <span>Status: ${post.status}</span>
+                <span>Slug: ${post.slug}</span>
+                <span>Updated: ${new Date(post.updatedAt || post.createdAt).toLocaleDateString()}</span>
+            </div>
+            <button class="quick-btn" style="margin-top:0.75rem;" onclick="editBlogPost('${post._id}')">✏️ Edit</button>
         </div>`;
     });
+}
+
+window.resetBlogForm = function () {
+    blogManagerState.editingId = null;
+    document.getElementById('blog-title').value = '';
+    document.getElementById('blog-summary').value = '';
+    document.getElementById('blog-content').value = '';
+    document.getElementById('blog-tags').value = '';
+    document.getElementById('blog-status').value = 'draft';
+    document.getElementById('blog-image').value = '';
+    document.getElementById('blog-image-url').value = '';
+    document.getElementById('blog-video-url').value = '';
+};
+
+window.editBlogPost = function (id) {
+    const post = blogManagerState.posts.find(item => item._id === id);
+    if (!post) return;
+    blogManagerState.editingId = id;
+    document.getElementById('blog-title').value = post.title || '';
+    document.getElementById('blog-summary').value = post.summary || '';
+    document.getElementById('blog-content').value = post.content || '';
+    document.getElementById('blog-tags').value = (post.tags || []).join(', ');
+    document.getElementById('blog-status').value = post.status || 'draft';
+    document.getElementById('blog-image-url').value = post.imageUrl || '';
+    document.getElementById('blog-video-url').value = post.videoUrl || '';
+};
+
+window.submitBlogPost = async function () {
+    const formData = new FormData();
+    formData.append('title', document.getElementById('blog-title').value.trim());
+    formData.append('summary', document.getElementById('blog-summary').value.trim());
+    formData.append('content', document.getElementById('blog-content').value.trim());
+    formData.append('tags', document.getElementById('blog-tags').value.trim());
+    formData.append('status', document.getElementById('blog-status').value);
+    formData.append('imageUrl', document.getElementById('blog-image-url').value.trim());
+    formData.append('videoUrl', document.getElementById('blog-video-url').value.trim());
+
+    const imageFile = document.getElementById('blog-image').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
+    const endpoint = blogManagerState.editingId
+        ? `/api/admin/blog/${blogManagerState.editingId}`
+        : '/api/admin/blog';
+    const method = blogManagerState.editingId ? 'PATCH' : 'POST';
+
+    const res = await fetch(endpoint, {
+        method,
+        credentials: 'include',
+        body: formData
+    });
+    const data = await res.json();
+    if (!data.success) {
+        alert(data.error || 'Failed to save blog post');
+        return;
+    }
+    resetBlogForm();
+    await loadBlogManager();
+};
+
+window.deleteBlogPost = async function (id) {
+    if (!confirm('Delete this blog post?')) return;
+    const res = await fetch(`/api/admin/blog/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+    });
+    const data = await res.json();
+    if (!data.success) {
+        alert(data.error || 'Failed to delete post');
+        return;
+    }
+    await loadBlogManager();
+};
+
+function refreshBlogStats() {
+    blogStatsCount = blogManagerState.posts.length;
 }
 
 function renderSocials() {
@@ -360,9 +456,7 @@ window.addProject = () => {
 };
 
 window.addBlogPost = () => {
-    contentData.blog.push({ title: "New Post", summary: "Summary here...", content: "Full content here..." });
-    renderBlog();
-    updateDashboardStats();
+    showSection('blogManager');
 };
 
 window.addSkill = () => {
@@ -414,6 +508,9 @@ window.showSection = (sectionId) => {
     // Context-specific actions
     if (sectionId === 'users') {
         window.renderUsers();
+        stopLogPolling();
+    } else if (sectionId === 'blogManager') {
+        refreshBlogManager();
         stopLogPolling();
     } else if (sectionId === 'server') {
         startLogPolling();
