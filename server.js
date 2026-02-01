@@ -776,7 +776,7 @@ app.get('/api/users/:id/following', async (req, res) => {
     if (!isValidObjectId(id)) {
         return res.status(400).json({ success: false, error: 'Invalid user id' });
     }
-    }
+   
     res.json({ success: true });
 });
 
