@@ -111,9 +111,6 @@ const transporter = emailEnabled
         host: emailConfig.host,
         port: emailConfig.port,
         secure: emailConfig.port === 465,
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT || '587'),
-        secure: process.env.EMAIL_PORT === '465',
         auth: {
             user: emailConfig.user,
             pass: emailConfig.pass
@@ -126,7 +123,7 @@ const transporter = emailEnabled
 
 async function sendMailSafe(options) {
   // Use ONE flag name consistently
-  if (!isEmailEnabled || !transporter) {
+  if (!emailEnabled || !transporter) {
     console.log(
       `[MAIL] Skipping email for ${options?.to}: Email is disabled or not configured.`
     );
@@ -191,7 +188,6 @@ async function sendLoginAlertEmail(user, meta) {
     const timestamp = new Date().toLocaleString();
     await sendMailSafe({
         from: `"Arya Security" <${emailConfig.from}>`,
-        from: `"Arya Security" <${process.env.EMAIL_USER}>`,
         to: user.email,
         subject: 'New login detected',
         html: `
@@ -448,7 +444,6 @@ app.post('/api/login', authLimiter, async (req, res) => {
         if (!user) {
             const message = type === 'admin' ? 'Invalid credentials.' : 'User not found. Please Sign Up.';
             return res.status(400).json({ success: false, error: message });
-            return res.status(400).json({ success: false, error: 'User not found. Please Sign Up.' });
         }
 
         if (!user.isVerified) {
@@ -776,46 +771,6 @@ app.get('/api/users/:id/following', async (req, res) => {
     if (!isValidObjectId(id)) {
         return res.status(400).json({ success: false, error: 'Invalid user id' });
     }
-   
-    res.json({ success: true });
-});
-
-app.get('/api/users/:id/followers', async (req, res) => {
-    const { id } = req.params;
-    if (!isValidObjectId(id)) {
-        return res.status(400).json({ success: false, error: 'Invalid user id' });
-    }
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
-    const skip = (page - 1) * limit;
-
-    const [total, follows] = await Promise.all([
-        db.Follow.countDocuments({ followingId: id }),
-        db.Follow.find({ followingId: id })
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate('followerId', 'name avatarUrl bio followersCount followingCount')
-            .lean()
-    ]);
-
-    const items = follows.map(f => ({
-        id: f.followerId?._id?.toString(),
-        name: f.followerId?.name,
-        avatarUrl: f.followerId?.avatarUrl || '',
-        bio: f.followerId?.bio || '',
-        followersCount: f.followerId?.followersCount || 0,
-        followingCount: f.followerId?.followingCount || 0
-    }));
-
-    res.json({ success: true, total, page, limit, items });
-});
-
-app.get('/api/users/:id/following', async (req, res) => {
-    const { id } = req.params;
-    if (!isValidObjectId(id)) {
-        return res.status(400).json({ success: false, error: 'Invalid user id' });
-    }
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
     const skip = (page - 1) * limit;
@@ -922,121 +877,6 @@ app.get('/api/admin/blog', requireAuth, requireAdmin, async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
     const skip = (page - 1) * limit;
-
-    const [total, follows] = await Promise.all([
-        db.Follow.countDocuments({ followerId: id }),
-        db.Follow.find({ followerId: id })
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate('followingId', 'name avatarUrl bio followersCount followingCount')
-            .lean()
-    ]);
-
-    const items = follows.map(f => ({
-        id: f.followingId?._id?.toString(),
-        name: f.followingId?.name,
-        avatarUrl: f.followingId?.avatarUrl || '',
-        bio: f.followingId?.bio || '',
-        followersCount: f.followingId?.followersCount || 0,
-        followingCount: f.followingId?.followingCount || 0
-    }));
-
-    res.json({ success: true, total, page, limit, items });
-});
-
-app.get('/api/users/:id/is-following', requireAuth, async (req, res) => {
-    const { id } = req.params;
-    if (!isValidObjectId(id)) {
-        return res.status(400).json({ success: false, error: 'Invalid user id' });
-    }
-    const exists = await db.Follow.exists({ followerId: req.user._id, followingId: id });
-    res.json({ success: true, isFollowing: Boolean(exists) });
-});
-
-// Blog
-function slugifyTitle(title) {
-    return sanitizeText(title)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '')
-        .slice(0, 80);
-}
-
-async function generateUniqueSlug(title, excludeId) {
-    const base = slugifyTitle(title) || 'post';
-    let slug = base;
-    let counter = 1;
-    while (true) {
-        const query = { slug };
-        if (excludeId) {
-            query._id = { $ne: excludeId };
-        }
-        const exists = await db.BlogPost.exists(query);
-        if (!exists) return slug;
-        counter += 1;
-        slug = `${base}-${counter}`;
-    }
-}
-
-app.get('/api/blog', async (req, res) => {
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const limit = Math.min(24, Math.max(1, parseInt(req.query.limit || '6', 10)));
-    const skip = (page - 1) * limit;
-    const q = req.query.q ? String(req.query.q) : '';
-    const tag = req.query.tag ? String(req.query.tag) : '';
-
-    const filter = { status: 'published' };
-    if (q) filter.title = { $regex: q, $options: 'i' };
-    if (tag) filter.tags = tag;
-
-    const [total, posts] = await Promise.all([
-        db.BlogPost.countDocuments(filter),
-        db.BlogPost.find(filter)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean()
-    ]);
-
-    const items = posts.map(post => ({
-        id: post._id.toString(),
-        title: post.title,
-        summary: post.summary,
-        imageUrl: post.imageUrl || '',
-        videoUrl: post.videoUrl || '',
-        tags: post.tags || [],
-        slug: post.slug,
-        createdAt: post.createdAt
-    }));
-
-    res.json({ success: true, total, page, limit, items });
-});
-
-app.get('/api/blog/:slug', async (req, res) => {
-    const post = await db.BlogPost.findOne({ slug: req.params.slug, status: 'published' }).lean();
-    if (!post) {
-        return res.status(404).json({ success: false, error: 'Post not found' });
-    }
-    res.json({ success: true, post });
-});
-
-app.get('/api/admin/blog', requireAuth, requireAdmin, async (req, res) => {
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
-    const skip = (page - 1) * limit;
-
-    const [total, posts] = await Promise.all([
-        db.BlogPost.countDocuments({}),
-        db.BlogPost.find({})
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean()
-    ]);
-
-    res.json({ success: true, total, page, limit, items: posts });
-});
 
     const [total, posts] = await Promise.all([
         db.BlogPost.countDocuments({}),
@@ -1089,48 +929,6 @@ app.post('/api/admin/blog', requireAuth, requireAdmin, upload.single('image'), a
         res.json({ success: true, post });
     } catch (error) {
         console.error('Create blog error:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
-    }
-});
-
-app.patch('/api/admin/blog/:id', requireAuth, requireAdmin, upload.single('image'), async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (!isValidObjectId(id)) {
-            return res.status(400).json({ success: false, error: 'Invalid blog id' });
-        }
-
-        const updates = {};
-        if (req.body?.title) updates.title = sanitizeText(req.body.title);
-        if (req.body?.summary) updates.summary = sanitizeText(req.body.summary);
-        if (req.body?.content) updates.content = sanitizeText(req.body.content);
-        if (req.body?.status) updates.status = req.body.status === 'published' ? 'published' : 'draft';
-        if (req.body?.videoUrl !== undefined) updates.videoUrl = sanitizeText(req.body.videoUrl || '');
-        if (req.body?.tags !== undefined) {
-            updates.tags = String(req.body.tags)
-                .split(',')
-                .map(tag => sanitizeText(tag))
-                .filter(Boolean);
-        }
-        if (req.body?.imageUrl) updates.imageUrl = sanitizeText(req.body.imageUrl);
-
-        if (req.file) {
-            const uploadResult = await uploadBufferToCloudinary(req.file.buffer, 'blog');
-            updates.imageUrl = uploadResult.secure_url;
-        }
-
-        if (updates.title) {
-            updates.slug = await generateUniqueSlug(updates.title, id);
-        }
-
-        if (!Object.keys(updates).length) {
-            return res.status(400).json({ success: false, error: 'No updates provided' });
-        }
-
-        await db.BlogPost.updateOne({ _id: id }, { $set: updates });
-        res.json({ success: true, message: 'Blog updated' });
-    } catch (error) {
-        console.error('Update blog error:', error);
         res.status(500).json({ success: false, error: 'Server Error' });
     }
 });
