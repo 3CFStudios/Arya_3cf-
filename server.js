@@ -185,24 +185,7 @@ async function sendResetEmail(user, token) {
     `,
   });
 }
-    const resetUrl = `${APP_BASE_URL}/reset.html?token=${encodeURIComponent(token)}`;
-    await sendMailSafe({
-        from: `"Arya Security" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: 'Reset your password',
-        html: `
-            <div style="font-family: sans-serif; background-color: #050505; color: #fff; padding: 2rem; border-radius: 12px; border: 1px solid #bd00ff;">
-                <h1 style="color: #bd00ff; margin-bottom: 1rem;">Reset your password</h1>
-                <p>We received a password reset request for your account.</p>
-                <p style="margin: 1.5rem 0;">
-                  <a href="${resetUrl}" style="color:#050505; background:#bd00ff; padding:0.75rem 1.25rem; border-radius:6px; text-decoration:none; font-weight:bold;">Reset Password</a>
-                </p>
-                <p style="font-size:0.85rem; color:#777;">If the button doesn't work, open this link:</p>
-                <p style="font-size:0.85rem; color:#aaa;">${resetUrl}</p>
-            </div>
-        `
-    });
-}
+    
 
 async function sendLoginAlertEmail(user, meta) {
     const timestamp = new Date().toLocaleString();
