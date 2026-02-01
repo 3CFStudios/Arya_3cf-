@@ -224,6 +224,11 @@
                 <input type="password" id="password" required placeholder="••••••••">
             </div>
 
+            <div class="form-group hidden" id="master-key-group">
+                <label>Master Key</label>
+                <input type="password" id="master-key" placeholder="Enter admin master key">
+            </div>
+
             <button type="submit" id="submit-btn">Login</button>
 
             <p id="error-msg"></p>
@@ -258,6 +263,8 @@
                 toggle.style.display = 'none'; // No signup for admin
                 nameGroup.classList.add('hidden');
                 document.getElementById('name').removeAttribute('required');
+                document.getElementById('master-key-group').classList.remove('hidden');
+                document.getElementById('master-key').setAttribute('required', 'true');
                 btn.innerText = 'Login as Admin';
                 btn.style.background = "#00f3ff";
                 document.getElementById('auth-helpers').style.display = 'none';
@@ -266,6 +273,8 @@
                 btn.innerText = 'Login';
                 btn.style.background = "#bd00ff";
                 document.getElementById('auth-helpers').style.display = 'flex';
+                document.getElementById('master-key-group').classList.add('hidden');
+                document.getElementById('master-key').removeAttribute('required');
             }
 
             document.getElementById('error-msg').style.display = 'none';

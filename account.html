@@ -267,6 +267,13 @@
             <p id="success-msg"></p>
         </form>
 
+        <div style="margin-top: 2rem;">
+            <h2 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Your Posts</h2>
+            <div id="posts-loading" style="color: #888;">Loading posts...</div>
+            <ul id="posts-list" style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem;"></ul>
+            <div id="posts-empty" style="color: #666; display: none;">No posts yet.</div>
+        </div>
+
         <a href="/" class="back-link">&larr; Back to Website</a>
     </div>
 
@@ -308,8 +315,44 @@
                 document.getElementById('account-name').value = user.name || '';
                 document.getElementById('account-bio').value = user.bio || '';
                 document.getElementById('avatar-preview').src = user.avatarUrl || 'https://via.placeholder.com/72';
+                await loadPosts();
             } catch (err) {
                 showError(err.message);
+            }
+        }
+
+        async function loadPosts() {
+            const loading = document.getElementById('posts-loading');
+            const list = document.getElementById('posts-list');
+            const empty = document.getElementById('posts-empty');
+            loading.style.display = 'block';
+            empty.style.display = 'none';
+            list.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/me/posts', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load posts.');
+                }
+                if (!data.posts.length) {
+                    empty.style.display = 'block';
+                    return;
+                }
+                data.posts.forEach((post) => {
+                    const item = document.createElement('li');
+                    item.style.padding = '0.75rem 1rem';
+                    item.style.background = 'rgba(255,255,255,0.04)';
+                    item.style.border = '1px solid rgba(255,255,255,0.1)';
+                    item.style.borderRadius = '0.75rem';
+                    item.innerHTML = `<strong>${post.title}</strong><br><span style="color:#888; font-size:0.85rem;">${post.status} • ${new Date(post.createdAt).toLocaleDateString()}</span>`;
+                    list.appendChild(item);
+                });
+            } catch (error) {
+                empty.textContent = error.message;
+                empty.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
             }
         }
 
