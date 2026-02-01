@@ -1,0 +1,236 @@
+
+
+// Custom Cursor Setup
+let cursorDot;
+let cursorOutline;
+
+const initCursor = () => {
+  cursorDot = document.querySelector('.cursor-dot');
+  cursorOutline = document.querySelector('.cursor-outline');
+
+  if (!cursorDot || !cursorOutline) {
+    console.warn("Custom cursor elements not found in DOM");
+    return false;
+  }
+  return true;
+};
+
+window.addEventListener('mousemove', function (e) {
+  if (!cursorDot || !cursorOutline) {
+    if (!initCursor()) return;
+  }
+
+  const posX = e.clientX;
+  const posY = e.clientY;
+
+  cursorDot.style.opacity = '1';
+  cursorDot.style.left = `${posX}px`;
+  cursorDot.style.top = `${posY}px`;
+
+  cursorOutline.style.opacity = '1';
+  cursorOutline.animate({
+    left: `${posX}px`,
+    top: `${posY}px`
+  }, { duration: 500, fill: "forwards" });
+});
+
+// Interactive Cursor Effects
+const addCursorListeners = () => {
+  if (!cursorDot || !cursorOutline) return;
+
+  const interactives = document.querySelectorAll('a, button, .btn, input, textarea, [role="button"]');
+  interactives.forEach(el => {
+    // Prevent double listeners
+    if (el.dataset.cursorBound) return;
+    el.dataset.cursorBound = "true";
+
+    el.addEventListener('mouseenter', () => {
+      cursorOutline.style.width = '70px';
+      cursorOutline.style.height = '70px';
+      cursorOutline.style.backgroundColor = 'rgba(0, 243, 255, 0.1)';
+      cursorOutline.style.borderColor = 'var(--color-primary)';
+      cursorDot.style.transform = 'translate(-50%, -50%) scale(1.5)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursorOutline.style.width = '40px';
+      cursorOutline.style.height = '40px';
+      cursorOutline.style.backgroundColor = 'transparent';
+      cursorOutline.style.borderColor = 'var(--color-primary)';
+      cursorDot.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
+  });
+};
+
+// Start initialization when DOM is ready
+const startCursorSystem = () => {
+  if (initCursor()) {
+    addCursorListeners();
+
+    const observer_cursor = new MutationObserver(() => {
+      addCursorListeners();
+    });
+
+    if (document.body) {
+      observer_cursor.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+};
+
+// Scroll Animations Helper
+const addScrollListeners = () => {
+  const targets = document.querySelectorAll('section:not(.scroll-observed), .glass-card:not(.scroll-observed), h2:not(.scroll-observed), .btn:not(.scroll-observed)');
+  targets.forEach(el => {
+    el.classList.add('reveal');
+    el.classList.add('scroll-observed'); // Prevent double observing
+    observer.observe(el);
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startCursorSystem);
+} else {
+  startCursorSystem();
+}
+
+// Canvas Background Animation
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+
+let width, height;
+let particles = [];
+const particleCount = 60; // Adjust for density
+const connectionDistance = 150;
+const mouseDistance = 200;
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = (Math.random() - 0.5) * 0.5;
+    this.size = Math.random() * 2;
+    this.color = 'rgba(0, 243, 255, 0.5)'; // Cyan
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (this.x < 0 || this.x > width) this.vx *= -1;
+    if (this.y < 0 || this.y > height) this.vy *= -1;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+}
+
+function initCanvas() {
+  resizeCanvas();
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
+  }
+  animate();
+}
+
+function resizeCanvas() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+}
+
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+
+  drawConnections();
+  requestAnimationFrame(animate);
+}
+
+function drawConnections() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < connectionDistance) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(0, 243, 255, ${1 - dist / connectionDistance})`;
+        ctx.lineWidth = 0.5;
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
+initCanvas();
+
+// Scroll Animations (Expanded)
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: "0px 0px -50px 0px" // Trigger slightly before element is fully in view
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('active');
+      observer.unobserve(entry.target); // Only animate once
+    }
+  });
+}, observerOptions);
+
+
+// Cookie Banner Logic
+const initCookieBanner = () => {
+  const banner = document.getElementById('cookie-banner');
+  const acceptBtn = document.getElementById('accept-cookies');
+
+  if (!banner || !acceptBtn) return;
+
+  // Check if already accepted
+  if (!localStorage.getItem('cookieConcent')) {
+    setTimeout(() => {
+      banner.classList.add('show');
+    }, 2000);
+  }
+
+  acceptBtn.addEventListener('click', () => {
+    localStorage.setItem('cookieConcent', 'true');
+    banner.classList.remove('show');
+  });
+};
+
+// Initialization logic
+const initAll = () => {
+  startCursorSystem();
+  addScrollListeners();
+  initCookieBanner();
+
+  // Re-check for new elements when DOM changes (Ajax/Renderer)
+  const observer_all = new MutationObserver(() => {
+    addScrollListeners();
+  });
+  observer_all.observe(document.body, { childList: true, subtree: true });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAll);
+} else {
+  initAll();
+}

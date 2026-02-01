@@ -1,0 +1,162 @@
+{
+    "hero": {
+        "titlePrefix": "Hi, I'm Arya ",
+        "titleSuffix": "",
+        "subtitle": "Builder. Tech nerd. Systems enjoyer.",
+        "description": "I design and build high performance software systems, games, AI powered tools, and experimental tech projects. I like breaking complex problems, rebuilding them cleaner, faster, and cooler.",
+        "focusList": [
+            "Game engines & real-time 3D systems",
+            "AI-driven tools and procedural generation",
+            "High-end software architecture"
+        ],
+        "buttons": [
+            {
+                "text": "View Projects",
+                "link": "#projects"
+            },
+            {
+                "text": "Contact Me",
+                "link": "#contact"
+            }
+        ]
+    },
+    "about": {
+        "title": "About Me",
+        "p1": "I’m Arya  a student developer and creator who’s deeply into technology, engineering, and building things that actually work.",
+        "p2": "I don’t just learn tools  I understand systems. Whether it’s game engines, AI pipelines, or software architecture, I care about how things work under the hood.",
+        "enjoyList": [
+            "Solving hard technical problems",
+            "Building from scratch instead of relying on templates",
+            "Mixing creativity with engineering",
+            "Pushing projects beyond “good enough”"
+        ],
+        "apartList": [
+            "Strong fundamentals",
+            "Willingness to learn deeply",
+            "I finish what I start"
+        ]
+    },
+    "projects": [
+        {
+            "title": "Custom Game Engine(In progress)",
+            "tag": "C++ / OpenGL",
+            "description": "A custom-built 3D game engine with rendering, physics, AI, and editor tools.",
+            "features": [
+                "Real-time rendering",
+                "Physics simulation",
+                "AI-driven NPCs",
+                "Modular architecture"
+            ],
+            "role": [
+                "Not gonnal lie,I do everything"
+            ],
+            "stack": "C++, Unreal Engine, OpenGL, AI Systems"
+        },
+        {
+            "title": "Procedural City Generator(In progress)",
+            "tag": "AI System",
+            "description": "An AI assisted system that generates buildings and cities procedurally.",
+            "features": [
+                "Procedural buildings",
+                "City stitching",
+                "Performance-optimized generation"
+            ],
+            "role": [],
+            "stack": "Unreal Engine, C++, AI Logic"
+        },
+        {
+            "title": "AI NPC System(In progress)",
+            "tag": "AI Logic",
+            "description": "GTA style NPC behavior with decision-making and combat logic.",
+            "features": [],
+            "role": [],
+            "stack": "Unreal Engine, AI Behavior Trees"
+        }
+    ],
+    "skills": [
+        {
+            "category": "Languages",
+            "items": "C++ • Python • JavaScript  • Java • HTML • CSS"
+        },
+        {
+            "category": "Game & Graphics",
+            "items": "Unreal Engine • Blender • Real-time Rendering"
+        },
+        {
+            "category": "AI & Systems",
+            "items": "AI Logic Design • Procedural Generation • Optimization"
+        },
+        {
+            "category": "Tools",
+            "items": "GitHub • Visual Studio • DaVinci Resolve • Blender • Premiere Pro • After Effects"
+        }
+    ],
+    "experience": [
+        {
+            "title": "Student Developer",
+            "subtitle": "",
+            "items": [
+                "Built multiple advanced technical projects",
+                "Focused on real time systems and AI"
+            ]
+        }
+    ],
+    "achievements": [
+        {
+            "title": "Achievements",
+            "items": [
+                "Continuous learner in advanced tech fields"
+            ]
+        }
+    ],
+    "blog": [
+        {
+            "title": "Why I Build My Own Systems",
+            "summary": "I believe building from scratch teaches you more than using black-box tools."
+        },
+        {
+            "title": "AI in Games",
+            "summary": "Thoughts on how AI is changing gameplay and development.",
+            "content": "",
+            "video": ""
+        }
+    ],
+    "contact": {
+        "title": "Let's Talk",
+        "subtitle": "Want to collaborate or just talk tech?",
+        "email": "www.vlarya.com@gmail.com",
+        "socials": [
+            {
+                "name": "Github",
+                "link": "https://github.com/3CFStudios"
+            },
+            {
+                "name": "Instagram",
+                "link": "https://www.instagram.com/arya_3cf/"
+            },
+            {
+                "name": "Twitter / X",
+                "link": "https://www.youtube.com/watch?v=xvFZjo5PgG0"
+            }
+        ]
+    },
+    "customSections": [],
+    "sectionOrder": [
+        "hero",
+        "about",
+        "projects",
+        "skills",
+        "experience",
+        "blog",
+        "contact"
+    ],
+    "theme": {
+        "primary": "#00f3ff",
+        "secondary": "#bd00ff",
+        "bg": "#120434"
+    },
+    "analytics": {
+        "totalViews": 22
+    },
+    "sitePassword": "Arya172010"
+}

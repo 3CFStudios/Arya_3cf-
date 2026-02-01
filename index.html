@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARYA | Builder. Tech Nerd. Systems Enjoyer.</title>
+  <!-- Custom Cursor -->
+  <script type="module" src="./src/main.js"></script>
+  <script type="module" src="./src/renderer.js"></script>
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+
+<body>
+  <div class="cursor-dot" data-cursor-dot></div>
+  <div class="cursor-outline" data-cursor-outline></div>
+  <canvas id="bg-canvas"></canvas>
+
+  <nav>
+    <div class="logo">ARYA</div>
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#blog">Blog</a></li>
+      <li><a href="/login.html" class="nav-login">Login</a></li>
+    </ul>
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </nav>
+
+  <section id="home" class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Loading...</h1>
+      <h2 class="hero-subtitle gradient-text"></h2>
+
+      <div class="glass-card"
+        style="display: inline-block; text-align: left; max-width: 600px; padding: 2rem; margin-bottom: 2rem;">
+        <p id="hero-desc" style="margin-bottom: 1.5rem; line-height: 1.6;"></p>
+        <p style="font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem;">Currently focused on:</p>
+        <ul id="hero-focus-list" style="list-style: none; margin-left: 0;"></ul>
+      </div>
+
+      <div>
+        <a href="#projects" class="btn">View Projects</a>
+        <a href="#contact" class="btn" style="margin-left: 1rem;">Contact Me</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="container">
+    <div class="glass-card">
+      <h2 class="gradient-text">About Me</h2>
+      <br>
+      <div style="line-height: 1.8; color: #ccc;">
+        <p id="about-p1" style="margin-bottom: 1.5rem;"></p>
+        <p id="about-p2" style="margin-bottom: 1.5rem;"></p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+          <div>
+            <h3 style="font-size: 1.2rem; color: var(--color-text); margin-bottom: 1rem;">I Enjoy:</h3>
+            <ul id="about-enjoy-list" style="list-style: none; padding-left: 0;"></ul>
+          </div>
+          <div>
+            <h3 style="font-size: 1.2rem; color: var(--color-text); margin-bottom: 1rem;">What Sets Me Apart:</h3>
+            <ul id="about-apart-list" style="list-style: none; padding-left: 0;"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects" class="container">
+    <h2 style="margin-bottom: 3rem; text-align: center;">Projects</h2>
+    <div id="projects-container" style="display: grid; grid-template-columns: 1fr; gap: 3rem;"></div>
+  </section>
+
+  <section id="skills" class="container" style="min-height: auto; padding: 4rem 0;">
+    <h2 style="margin-bottom: 3rem; text-align: center;">Skills</h2>
+    <div id="skills-container"
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;"></div>
+  </section>
+
+  <section id="experience" class="container">
+    <h2 style="margin-bottom: 3rem; text-align: center;">Experience & Achievements</h2>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+      <!-- Experience Column -->
+      <div>
+        <div class="glass-card">
+          <h3 id="experience-title" style="font-size: 1.5rem; color: var(--color-primary); margin-bottom: 1.5rem;">
+            Experience</h3>
+          <ul id="experience-list" style="line-height: 1.8; color: #ccc; padding-left: 1.2rem;"></ul>
+        </div>
+      </div>
+
+      <!-- Achievements Column -->
+      <div>
+        <div class="glass-card">
+          <h3 style="font-size: 1.5rem; color: var(--color-secondary); margin-bottom: 1.5rem;">Achievements</h3>
+          <ul id="achievements-list" style="line-height: 1.8; color: #ccc; padding-left: 1.2rem;"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="blog" class="container" style="min-height: auto; padding: 4rem 0;">
+    <h2 style="margin-bottom: 3rem; text-align: center;">Blog</h2>
+    <div id="blog-container"
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;"></div>
+  </section>
+
+  <section id="contact" style="text-align: center;">
+    <h2 class="hero-title" style="font-size: 3rem;">Let's Talk</h2>
+    <p style="margin: 2rem 0; color: #888;">Want to collaborate or just talk tech?</p>
+    <div style="margin-bottom: 2rem;">
+      <a href="mailto:yourname@mail.com" class="btn">www.vlarya.com@gmail.com</a>
+    </div>
+    <div id="socials-container" style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;"></div>
+  </section>
+
+  <div id="cookie-banner" class="cookie-banner">
+    <div class="cookie-content">
+      <p>We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies. <a
+          href="#" style="color: var(--color-primary); text-decoration: underline;">Learn more</a></p>
+      <button id="accept-cookies" class="btn" style="margin-top: 0; padding: 0.6rem 1.5rem;">Accept</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; Arya — Built with curiosity and too much caffeine..</p>
+  </footer>
+</body>
+
+</html>

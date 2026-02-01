@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arya Admin | Dashboard</title>
+    <link rel="stylesheet" href="../src/style.css">
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #050505;
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.1), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(189, 0, 255, 0.1), transparent 40%);
+        }
+
+        /* Sidebar */
+        aside {
+            width: 260px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-section h2 {
+            font-family: 'Syncopate', sans-serif;
+            color: var(--color-primary);
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        aside button {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: left;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: 0.3s;
+            border-radius: 8px;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        aside button:hover,
+        aside button.active {
+            color: #fff;
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        aside button.active {
+            border-left: 3px solid var(--color-primary);
+            background: rgba(0, 243, 255, 0.15);
+        }
+
+        .nav-section {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding-left: 1rem;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1#page-title {
+            font-size: 1.5rem;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-btn:hover {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--color-primary);
+        }
+
+        /* Server Console Styles */
+        .console-wrapper {
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            height: 550px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #server-logs {
+            flex: 1;
+            overflow-y: auto;
+            color: #ccc;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            padding-right: 10px;
+            line-height: 1.5;
+        }
+
+        #server-logs .log-info {
+            color: #00f3ff;
+        }
+
+        #server-logs .log-error {
+            color: #ff0055;
+            font-weight: bold;
+        }
+
+        #server-logs .log-time {
+            color: #666;
+            margin-right: 8px;
+        }
+
+        .console-input-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid #222;
+            padding-top: 0.8rem;
+        }
+
+        #console-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .console-prompt {
+            color: var(--color-primary);
+            font-weight: bold;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.6rem;
+            color: var(--color-primary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.05);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .save-btn {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: #000;
+            padding: 0.8rem 2rem;
+            border: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 6px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 243, 255, 0.3);
+        }
+
+        .add-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .add-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--color-primary);
+        }
+
+        .delete-btn {
+            color: #ff4444;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.7;
+            transition: 0.3s;
+        }
+
+        .delete-btn:hover {
+            opacity: 1;
+        }
+
+        /* Item Cards */
+        .item-list {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .activity-feed h3 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .activity-item {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-primary);
+            border-radius: 50%;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-primary);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .section-editor {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section-editor.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Preview Link */
+        .preview-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .preview-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <aside>
+        <div class="logo-section">
+            <div class="logo-icon">⚡</div>
+            <h2>ARYA CMS</h2>
+        </div>
+
+        <div class="nav-section">Overview</div>
+        <button onclick="showSection('dashboard')" class="active">📊 Dashboard</button>
+
+        <div class="nav-section">Content</div>
+        <button onclick="showSection('hero')">🏠 Hero</button>
+        <button onclick="showSection('about')">👤 About</button>
+        <button onclick="showSection('projects')">🚀 Projects</button>
+        <button onclick="showSection('skills')">🛠️ Skills</button>
+        <button onclick="showSection('experience')">💼 Experience</button>
+        <button onclick="showSection('achievements')">🏆 Achievements</button>
+        <button onclick="showSection('blog')">📝 Blog</button>
+        <button onclick="showSection('contact')">📬 Contact</button>
+
+        <div class="nav-section">Customize</div>
+        <button onclick="showSection('customSections')">✨ Custom Sections</button>
+        <button onclick="showSection('pageLayout')">📐 Page Layout</button>
+
+        <div class="nav-section">System</div>
+        <button onclick="showSection('users')">👥 User Management</button>
+        <button onclick="showSection('server')">📟 Server Console</button>
+        <button onclick="showSection('settings')">⚙️ Settings</button>
+
+        <div style="flex: 1;"></div>
+        <button onclick="window.open('/', '_blank')" class="preview-btn" style="margin-bottom: 0.5rem;">👁️ Preview
+            Site</button>
+        <button onclick="logout()"
+            style="color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); justify-content: center; margin-top: 0.5rem;">🚪
+            LOGOUT</button>
+    </aside>
+
+    <main>
+        <!-- Dashboard -->
+        <div id="dashboard" class="section-editor active">
+            <header>
+                <h1 id="page-title">Dashboard</h1>
+                <div class="header-actions">
+                    <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">Welcome back, Admin!</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🚀</div>
+                    <div class="stat-value" id="stat-projects">0</div>
+                    <div class="stat-label">Projects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value" id="stat-blog">0</div>
+                    <div class="stat-label">Blog Posts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👁️</div>
+                    <div class="stat-value" id="stat-views">0</div>
+                    <div class="stat-label">Total Views</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🛠️</div>
+                    <div class="stat-value" id="stat-skills">0</div>
+                    <div class="stat-label">Skills</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔗</div>
+                    <div class="stat-value" id="stat-socials">0</div>
+                    <div class="stat-label">Social Links</div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 1rem; color: #fff;">Quick Actions</h3>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="showSection('projects'); addProject();">➕ Add Project</button>
+                <button class="quick-btn" onclick="showSection('blog'); addBlogPost();">➕ Add Blog Post</button>
+                <button class="quick-btn" onclick="showSection('hero');">✏️ Edit Hero</button>
+                <button class="quick-btn" onclick="window.open('/', '_blank');">👁️ View Site</button>
+            </div>
+
+            <div class="activity-feed">
+                <h3>📋 Content Overview</h3>
+                <div class="activity-item"><span class="activity-dot"></span> Hero Section configured</div>
+                <div class="activity-item"><span class="activity-dot"></span> About page content ready</div>
+                <div class="activity-item"><span class="activity-dot"></span> <span id="overview-projects">0</span>
+                    projects listed</div>
+                <div class="activity-item"><span class="activity-dot"></span> <span id="overview-blog">0</span> blog
+                    posts published</div>
+                <div class="activity-item"><span class="activity-dot"></span> Contact info configured</div>
+            </div>
+        </div>
+
+        <!-- Hero -->
+        <div id="hero" class="section-editor">
+            <header>
+                <h1>Hero Section</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div class="form-group"><label>Title Prefix</label><input type="text" id="hero-titlePrefix"
+                    placeholder="Hi, I'm..."></div>
+            <div class="form-group"><label>Title Suffix (Emoji)</label><input type="text" id="hero-titleSuffix"
+                    placeholder="👋"></div>
+            <div class="form-group"><label>Subtitle / Tagline</label><input type="text" id="hero-subtitle"
+                    placeholder="Your tagline here..."></div>
+            <div class="form-group"><label>Description</label><textarea id="hero-description"
+                    placeholder="Brief intro about yourself..."></textarea></div>
+            <div class="form-group"><label>Focus List (One item per line)</label><textarea id="hero-focusList"
+                    placeholder="What you're focused on..."></textarea></div>
+        </div>
+
+        <!-- About -->
+        <div id="about" class="section-editor">
+            <header>
+                <h1>About Section</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div class="form-group"><label>Opening Paragraph</label><textarea id="about-p1"></textarea></div>
+            <div class="form-group"><label>Second Paragraph</label><textarea id="about-p2"></textarea></div>
+            <div class="form-group"><label>"I Enjoy" List (One per line)</label><textarea
+                    id="about-enjoyList"></textarea></div>
+            <div class="form-group"><label>"What Sets Me Apart" List (One per line)</label><textarea
+                    id="about-apartList"></textarea></div>
+        </div>
+
+        <!-- Projects -->
+        <div id="projects" class="section-editor">
+            <header>
+                <h1>Projects</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div id="projects-list"></div>
+            <button class="add-btn" onclick="addProject()">➕ Add New Project</button>
+        </div>
+
+        <!-- Skills -->
+        <div id="skills" class="section-editor">
+            <header>
+                <h1>Skills</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div id="skills-list"></div>
+            <button class="add-btn" onclick="addSkill()">➕ Add Skill Category</button>
+        </div>
+
+        <!-- Experience -->
+        <div id="experience" class="section-editor">
+            <header>
+                <h1>Experience</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div id="experience-list"></div>
+            <button class="add-btn" onclick="addExperience()">➕ Add Experience</button>
+        </div>
+
+        <!-- Achievements -->
+        <div id="achievements" class="section-editor">
+            <header>
+                <h1>Achievements</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div class="form-group"><label>Achievement Items (One per line)</label><textarea id="achievements-items"
+                    style="min-height: 150px;"></textarea></div>
+        </div>
+
+        <!-- Blog -->
+        <div id="blog" class="section-editor">
+            <header>
+                <h1>Blog Posts</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div id="blog-list"></div>
+            <button class="add-btn" onclick="addBlogPost()">➕ Add New Post</button>
+        </div>
+
+        <!-- Contact -->
+        <div id="contact" class="section-editor">
+            <header>
+                <h1>Contact Info</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <div class="form-group"><label>Section Title</label><input type="text" id="contact-title"></div>
+            <div class="form-group"><label>Subtitle</label><input type="text" id="contact-subtitle"></div>
+            <div class="form-group"><label>Email Address</label><input type="email" id="contact-email"></div>
+            <h3 style="margin: 2rem 0 1rem; color: #fff;">Social Links</h3>
+            <div id="socials-list"></div>
+            <button class="add-btn" onclick="addSocial()">➕ Add Social Link</button>
+        </div>
+
+        <!-- Custom Sections -->
+        <div id="customSections" class="section-editor">
+            <header>
+                <h1>Custom Sections</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <p style="color: rgba(255,255,255,0.6); margin-bottom: 1.5rem;">Create your own custom content blocks that
+                appear on your website. Each block has a title, content, and you can choose its style.</p>
+            <div id="custom-sections-list"></div>
+            <button class="add-btn" onclick="addCustomSection()">➕ Add Custom Section</button>
+        </div>
+
+        <!-- Page Layout -->
+        <div id="pageLayout" class="section-editor">
+            <header>
+                <h1>Page Layout</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
+            </header>
+            <p style="color: rgba(255,255,255,0.6); margin-bottom: 1.5rem;">Drag sections to reorder them on your
+                website. Your custom sections will appear in the order you set here.</p>
+            <div id="section-order-list" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Users -->
+        <div id="users" class="section-editor">
+            <header>
+                <h1>User Management</h1>
+                <button class="save-btn" onclick="renderUsers()">🔄 Refresh</button>
+            </header>
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.05); color: var(--color-primary);">
+                            <th style="padding: 1rem;">Name</th>
+                            <th style="padding: 1rem;">Email</th>
+                            <th style="padding: 1rem;">Role</th>
+                            <th style="padding: 1rem;">Joined</th>
+                            <th style="padding: 1rem;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Server Console Section -->
+        <section id="server-section" class="section-editor">
+            <header>
+                <h1>Live Server Logs</h1>
+                <div style="display: flex; gap: 10px;">
+                    <button class="quick-btn" onclick="fetchLogs()" style="padding: 0.4rem 1rem; font-size: 0.75rem;">🔄
+                        Refresh</button>
+                    <button class="quick-btn" onclick="sendConsoleCommand('clear')"
+                        style="padding: 0.4rem 1rem; font-size: 0.75rem;">🗑️ Clear Buffer</button>
+                </div>
+            </header>
+
+            <div class="glass-card">
+                <div class="console-wrapper">
+                    <div id="server-logs">Initializing console feed...</div>
+                    <form onsubmit="handleConsoleSubmit(event)" class="console-input-area">
+                        <span class="console-prompt">arya@server:~$</span>
+                        <input type="text" id="console-input" placeholder="Type a command (e.g. clear)..."
+                            autocomplete="off">
+                    </form>
+                </div>
+
+                <p style="margin-top: 1rem; font-size: 0.8rem; color: #666;">
+                    * Logs are captured in real-time. The console supports basic management commands.
+                </p>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section-editor">
+            <header>
+                <h1>Site Settings</h1>
+                <button class="save-btn" onclick="saveContent()">💾 Save All</button>
+            </header>
+
+            <h3 style="color: var(--color-primary); margin-bottom: 1.5rem;">🎨 Theme Customization</h3>
+            <div class="stats-grid">
+                <div class="form-group">
+                    <label>Primary Color</label>
+                    <input type="color" id="theme-primary" style="height: 50px; padding: 5px;">
+                </div>
+                <div class="form-group">
+                    <label>Secondary Color</label>
+                    <input type="color" id="theme-secondary" style="height: 50px; padding: 5px;">
+                </div>
+                <div class="form-group">
+                    <label>Background Color</label>
+                    <input type="color" id="theme-bg" style="height: 50px; padding: 5px;">
+                </div>
+            </div>
+
+            <h3 style="color: var(--color-primary); margin-top: 2.5rem; margin-bottom: 1.5rem;">🔒 Security</h3>
+            <div class="form-group">
+                <label>Site Password (Leave empty to disable)</label>
+                <input type="text" id="site-password" placeholder="e.g. arya123" style="max-width: 300px;">
+                <p style="color: rgba(255,255,255,0.4); font-size: 0.75rem; margin-top: 0.5rem;">This will prompt
+                    visitors for a password before they can see your content.</p>
+            </div>
+
+            <h3 style="color: var(--color-primary); margin-top: 2.5rem; margin-bottom: 1.5rem;">💾 Content Management
+            </h3>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="exportData()">📥 Export Backup (JSON)</button>
+                <button class="quick-btn" style="border-color: #ff4444; color: #ff4444;" onclick="resetAnalytics()">🗑️
+                    Reset View Counter</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="admin.js?v=debug_names_fix"></script>
+    <script>
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        window.addEventListener('mousemove', function (e) {
+            cursorDot.style.opacity = '1';
+            cursorOutline.style.opacity = '1';
+            cursorDot.style.left = `${e.clientX}px`;
+            cursorDot.style.top = `${e.clientY}px`;
+            cursorOutline.animate({
+                left: `${e.clientX}px`,
+                top: `${e.clientY}px`
+            }, { duration: 500, fill: "forwards" });
+        });
+    </script>
+</body>
+
+</html>
