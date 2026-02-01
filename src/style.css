@@ -674,6 +674,10 @@ ul li:nth-child(5) {
     cursor: pointer;
   }
 
+  .mobile-account {
+    display: block;
+  }
+
   .hamburger span {
     display: block;
     width: 25px;
@@ -697,6 +701,75 @@ ul li:nth-child(5) {
 }
 
 .hamburger {
+  display: none;
+}
+
+.mobile-account {
+  display: none;
+  position: relative;
+}
+
+.mobile-account-toggle {
+  background: transparent;
+  border: 1px solid var(--color-glass-border);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mobile-account-toggle:hover,
+.mobile-account-toggle:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
+}
+
+.mobile-account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  background: rgba(5, 5, 5, 0.96);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  min-width: 180px;
+  display: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1001;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-account-menu.open {
+  display: flex;
+}
+
+.mobile-account-menu a,
+.mobile-account-menu button {
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.mobile-account-menu a:hover,
+.mobile-account-menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-primary);
+}
+
+.mobile-account-link,
+.mobile-logout {
   display: none;
 }
 

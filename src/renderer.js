@@ -274,6 +274,30 @@ async function loadContent() {
             });
         });
     }
+
+    const mobileAccountToggle = document.querySelector('.mobile-account-toggle');
+    const mobileAccountMenu = document.querySelector('.mobile-account-menu');
+
+    if (mobileAccountToggle && mobileAccountMenu) {
+        mobileAccountToggle.addEventListener('click', () => {
+            const isOpen = mobileAccountMenu.classList.toggle('open');
+            mobileAccountToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+
+        mobileAccountMenu.querySelectorAll('a, button').forEach((item) => {
+            item.addEventListener('click', () => {
+                mobileAccountMenu.classList.remove('open');
+                mobileAccountToggle.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!mobileAccountMenu.contains(event.target) && !mobileAccountToggle.contains(event.target)) {
+                mobileAccountMenu.classList.remove('open');
+                mobileAccountToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 }
 
 // Check Auth and Update Nav
@@ -281,6 +305,10 @@ async function checkLoginStatus() {
     try {
         const res = await fetch('/api/auth-status');
         const data = await res.json();
+
+        const mobileLogin = document.querySelector('.mobile-login');
+        const mobileAccountLink = document.querySelector('.mobile-account-link');
+        const mobileLogout = document.querySelector('.mobile-logout');
 
         if (data.name) {
             // User is logged in
@@ -309,6 +337,24 @@ async function checkLoginStatus() {
                     navList.appendChild(logoutItem);
                 }
             }
+
+            if (mobileLogin && mobileAccountLink && mobileLogout) {
+                mobileLogin.style.display = 'none';
+                mobileAccountLink.style.display = 'block';
+                mobileLogout.style.display = 'block';
+
+                if (!mobileLogout.dataset.bound) {
+                    mobileLogout.dataset.bound = 'true';
+                    mobileLogout.addEventListener('click', async () => {
+                        await fetch('/api/logout', { method: 'POST' });
+                        window.location.reload();
+                    });
+                }
+            }
+        } else if (mobileLogin && mobileAccountLink && mobileLogout) {
+            mobileLogin.style.display = 'block';
+            mobileAccountLink.style.display = 'none';
+            mobileLogout.style.display = 'none';
         }
     } catch (e) {
         console.error("Auth check failed", e);
