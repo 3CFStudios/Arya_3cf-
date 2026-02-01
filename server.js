@@ -63,8 +63,18 @@ app.use((req, res, next) => {
 // --- Security: Protect Admin Routes ---
 app.use("/admin", (req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  if (req.signedCookies.admin_auth === "true") next();
-  else res.redirect("/login.html?tab=admin");
+
+  const allowExt = new Set([
+    ".css", ".js", ".map", ".png", ".jpg", ".jpeg", ".svg", ".ico",
+    ".woff", ".woff2", ".ttf"
+  ]);
+
+  const ext = path.extname(req.path).toLowerCase();
+  if (allowExt.has(ext)) return next();
+
+  if (req.signedCookies.admin_auth === "true") return next();
+
+  return res.redirect("/login.html?tab=admin");
 });
 
 // Serve frontend: if 'dist' exists, we are in production
