@@ -125,79 +125,66 @@ const transporter = emailEnabled
     : null;
 
 async function sendMailSafe(options) {
-    if (!emailEnabled || !transporter) {
-        console.log(`[MAIL] Skipping email for ${options?.to}: EMAIL_ENABLED is false.`);
-        return;
-    }
+  // Use ONE flag name consistently
+  if (!isEmailEnabled || !transporter) {
+    console.log(
+      `[MAIL] Skipping email for ${options?.to}: Email is disabled or not configured.`
+    );
+    return;
+  }
+
   try {
-  await transporter.sendMail({
-    from: emailConfig.from,
-    ...options
+    await transporter.sendMail({
+      from: emailConfig.from,
+      ...options,
+    });
+    console.log(`[MAIL] Sent: ${options.subject} -> ${options.to}`);
+  } catch (error) {
+    console.error(`[MAIL] Error sending email to ${options?.to}:`, error);
+  }
+}
+
+async function sendVerificationEmail(user, token) {
+  const verifyUrl = `${APP_BASE_URL}/api/verify-email?token=${encodeURIComponent(token)}`;
+
+  await sendMailSafe({
+    to: user.email,
+    subject: "Verify your email",
+    html: `
+      <div style="font-family: sans-serif; background-color: #050505; color: #fff; padding: 2rem; border-radius: 12px; border: 1px solid #00f3ff;">
+        <h1 style="color: #00f3ff; margin-bottom: 1rem;">Verify your email</h1>
+        <p>Hi <strong>${user.name || "there"}</strong>,</p>
+        <p>Confirm your email to activate your account.</p>
+        <p style="margin: 1.5rem 0;">
+          <a href="${verifyUrl}" style="color:#050505; background:#00f3ff; padding:0.75rem 1.25rem; border-radius:6px; text-decoration:none; font-weight:bold;">Verify Email</a>
+        </p>
+        <p style="font-size:0.85rem; color:#777;">If the button doesn't work, open this link:</p>
+        <p style="font-size:0.85rem; color:#aaa;">${verifyUrl}</p>
+      </div>
+    `,
   });
-} catch (error) {
-  console.error(`[MAIL] Error sending email to ${options?.to}:`, error);
-}
-
-    if (!isEmailEnabled || !transporter) {
-        console.log(`[MAIL] Skipping email for ${options?.to}: Email is disabled or not configured.`);
-        return;
-    }
-    try {
-        await transporter.sendMail(options);
-        console.log(`[MAIL] Sent: ${options.subject} -> ${options.to}`);
-    } catch (error) {
-        console.error(`[MAIL] Error sending email to ${options?.to}:`, error);
-    }
-}
-
-async function sendVerificationEmail(user, token) {
-    const verifyUrl = `${APP_BASE_URL}/api/verify-email?token=${encodeURIComponent(token)}`;
-    await sendMailSafe({
-        from: `"Arya Security" <${emailConfig.from}>`,
-        to: user.email,
-        subject: 'Verify your email',
-        html: `
-            <div style="font-family: sans-serif; background-color: #050505; color: #fff; padding: 2rem; border-radius: 12px; border: 1px solid #00f3ff;">
-                <h1 style="color: #00f3ff; margin-bottom: 1rem;">Verify your email</h1>
-                <p>Hi <strong>${user.name || 'there'}</strong>,</p>
-                <p>Confirm your email to activate your account.</p>
-                <p style="margin: 1.5rem 0;">
-                  <a href="${verifyUrl}" style="color:#050505; background:#00f3ff; padding:0.75rem 1.25rem; border-radius:6px; text-decoration:none; font-weight:bold;">Verify Email</a>
-                </p>
-                <p style="font-size:0.85rem; color:#777;">If the button doesn't work, open this link:</p>
-                <p style="font-size:0.85rem; color:#aaa;">${verifyUrl}</p>
-            </div>
-        `
-    });
 }
 
 async function sendResetEmail(user, token) {
-    const resetUrl = `${APP_BASE_URL}/reset.html?token=${encodeURIComponent(token)}`;
-    await sendMailSafe({
-        from: `"Arya Security" <${emailConfig.from}>`,
+  const resetUrl = `${APP_BASE_URL}/reset.html?token=${encodeURIComponent(token)}`;
 
-async function sendVerificationEmail(user, token) {
-    const verifyUrl = `${APP_BASE_URL}/api/verify-email?token=${encodeURIComponent(token)}`;
-    await sendMailSafe({
-        from: `"Arya Security" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: 'Verify your email',
-        html: `
-            <div style="font-family: sans-serif; background-color: #050505; color: #fff; padding: 2rem; border-radius: 12px; border: 1px solid #00f3ff;">
-                <h1 style="color: #00f3ff; margin-bottom: 1rem;">Verify your email</h1>
-                <p>Hi <strong>${user.name || 'there'}</strong>,</p>
-                <p>Confirm your email to activate your account.</p>
-                <p style="margin: 1.5rem 0;">
-                  <a href="${verifyUrl}" style="color:#050505; background:#00f3ff; padding:0.75rem 1.25rem; border-radius:6px; text-decoration:none; font-weight:bold;">Verify Email</a>
-                </p>
-                <p style="font-size:0.85rem; color:#777;">If the button doesn't work, open this link:</p>
-                <p style="font-size:0.85rem; color:#aaa;">${verifyUrl}</p>
-            </div>
-        `
-    });
+  await sendMailSafe({
+    to: user.email,
+    subject: "Reset your password",
+    html: `
+      <div style="font-family: sans-serif; background-color: #050505; color: #fff; padding: 2rem; border-radius: 12px; border: 1px solid #bd00ff;">
+        <h1 style="color: #bd00ff; margin-bottom: 1rem;">Reset your password</h1>
+        <p>Hi <strong>${user.name || "there"}</strong>,</p>
+        <p>Click the button below to reset your password.</p>
+        <p style="margin: 1.5rem 0;">
+          <a href="${resetUrl}" style="color:#050505; background:#bd00ff; padding:0.75rem 1.25rem; border-radius:6px; text-decoration:none; font-weight:bold;">Reset Password</a>
+        </p>
+        <p style="font-size:0.85rem; color:#777;">If the button doesn't work, open this link:</p>
+        <p style="font-size:0.85rem; color:#aaa;">${resetUrl}</p>
+      </div>
+    `,
+  });
 }
-
-async function sendResetEmail(user, token) {
     const resetUrl = `${APP_BASE_URL}/reset.html?token=${encodeURIComponent(token)}`;
     await sendMailSafe({
         from: `"Arya Security" <${process.env.EMAIL_USER}>`,
