@@ -60,6 +60,22 @@
             color: #bbb;
         }
 
+        .avatar-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         .meta span {
             color: #fff;
         }
@@ -89,6 +105,21 @@
             box-sizing: border-box;
         }
 
+        textarea {
+            width: 100%;
+            padding: 0.9rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            color: white;
+            border-radius: 4px;
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+            min-height: 120px;
+            resize: vertical;
+        }
+
         input:focus {
             border-color: #00f3ff;
             box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
@@ -98,6 +129,16 @@
             display: grid;
             gap: 1rem;
             margin-top: 1rem;
+        }
+
+        .upload-btn {
+            background: transparent;
+            color: #00f3ff;
+            border: 1px solid rgba(0, 243, 255, 0.4);
+        }
+
+        .upload-btn:hover {
+            border-color: #00f3ff;
         }
 
         button {
@@ -188,9 +229,23 @@
         </div>
 
         <form id="account-form">
+            <div class="avatar-row">
+                <img id="avatar-preview" class="avatar" src="" alt="Avatar">
+                <div style="flex: 1;">
+                    <label for="avatar-file">Profile picture</label>
+                    <input type="file" id="avatar-file" accept="image/*">
+                    <button type="button" class="secondary-btn upload-btn" id="avatar-upload-btn">Upload Avatar</button>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>Display Name</label>
                 <input type="text" id="account-name" required placeholder="Your name">
+            </div>
+
+            <div class="form-group">
+                <label>Bio</label>
+                <textarea id="account-bio" placeholder="Share a short bio"></textarea>
             </div>
 
             <div class="form-group">
@@ -218,6 +273,7 @@
     <script>
         const errorMsg = document.getElementById('error-msg');
         const successMsg = document.getElementById('success-msg');
+        let currentUserId = null;
 
         function showError(message) {
             successMsg.style.display = 'none';
@@ -233,7 +289,7 @@
 
         async function loadAccount() {
             try {
-                const res = await fetch('/api/account');
+                const res = await fetch('/api/me', { credentials: 'include' });
                 if (!res.ok) {
                     throw new Error('Please login to view your account.');
                 }
@@ -242,13 +298,16 @@
                     throw new Error(data.error || 'Unable to load account.');
                 }
 
-                const { account } = data;
-                document.getElementById('account-email').innerText = account.email;
-                document.getElementById('account-role').innerText = account.isAdmin ? 'Admin' : 'User';
-                document.getElementById('account-created').innerText = account.createdAt
-                    ? new Date(account.createdAt).toLocaleDateString()
+                const { user } = data;
+                currentUserId = user.id;
+                document.getElementById('account-email').innerText = user.email;
+                document.getElementById('account-role').innerText = user.isAdmin ? 'Admin' : 'User';
+                document.getElementById('account-created').innerText = user.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString()
                     : 'Unknown';
-                document.getElementById('account-name').value = account.name || '';
+                document.getElementById('account-name').value = user.name || '';
+                document.getElementById('account-bio').value = user.bio || '';
+                document.getElementById('avatar-preview').src = user.avatarUrl || 'https://via.placeholder.com/72';
             } catch (err) {
                 showError(err.message);
             }
@@ -259,9 +318,14 @@
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
 
+            if (!currentUserId) {
+                showError('Unable to load your profile. Please refresh.');
+                return;
+            }
             const name = document.getElementById('account-name').value.trim();
             const password = document.getElementById('account-password').value;
             const confirm = document.getElementById('account-password-confirm').value;
+            const bio = document.getElementById('account-bio').value.trim();
 
             if (!name) {
                 showError('Display name is required.');
@@ -273,12 +337,13 @@
                 return;
             }
 
-            const payload = { name };
+            const payload = { name, bio };
             if (password) payload.password = password;
 
             try {
                 const res = await fetch('/api/account', {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
@@ -294,8 +359,38 @@
             }
         });
 
+        document.getElementById('avatar-upload-btn').addEventListener('click', async () => {
+            if (!currentUserId) {
+                showError('Unable to load your profile. Please refresh.');
+                return;
+            }
+            const fileInput = document.getElementById('avatar-file');
+            if (!fileInput.files.length) {
+                showError('Please select an image first.');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('avatar', fileInput.files[0]);
+
+            try {
+                const res = await fetch(`/api/users/${currentUserId}/avatar`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Upload failed.');
+                }
+                document.getElementById('avatar-preview').src = data.avatarUrl;
+                showSuccess('Avatar updated!');
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
         document.getElementById('logout-btn').addEventListener('click', async () => {
-            await fetch('/api/logout', { method: 'POST' });
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
             window.location.href = '/';
         });
 
