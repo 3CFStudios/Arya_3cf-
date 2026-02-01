@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arya | Account</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+        :root {
+            --color-primary: #00f3ff;
+            --color-secondary: #bd00ff;
+            --color-bg: #050505;
+            --color-text: #ffffff;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem 1rem;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.1), transparent 70%);
+        }
+
+        .account-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-size: 1.5rem;
+            color: #fff;
+            text-align: center;
+        }
+
+        .meta {
+            display: grid;
+            gap: 0.6rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+
+        .meta span {
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.9rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            color: white;
+            border-radius: 4px;
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #00f3ff;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        .btn-row {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: 0.3s;
+        }
+
+        .primary-btn {
+            background: #00f3ff;
+            color: #000;
+        }
+
+        .primary-btn:hover {
+            background: #fff;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .secondary-btn:hover {
+            border-color: #fff;
+        }
+
+        #error-msg {
+            color: #ff4444;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+            text-align: center;
+        }
+
+        #success-msg {
+            color: #00f3ff;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+            text-align: center;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="account-card">
+        <h1>Account</h1>
+
+        <div class="meta" id="account-meta">
+            <div>Email: <span id="account-email">Loading...</span></div>
+            <div>Status: <span id="account-role">Loading...</span></div>
+            <div>Member since: <span id="account-created">Loading...</span></div>
+        </div>
+
+        <form id="account-form">
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="account-name" required placeholder="Your name">
+            </div>
+
+            <div class="form-group">
+                <label>New Password (optional)</label>
+                <input type="password" id="account-password" placeholder="••••••••">
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="account-password-confirm" placeholder="••••••••">
+            </div>
+
+            <div class="btn-row">
+                <button type="submit" class="primary-btn">Save Changes</button>
+                <button type="button" class="secondary-btn" id="logout-btn">Logout</button>
+            </div>
+
+            <p id="error-msg"></p>
+            <p id="success-msg"></p>
+        </form>
+
+        <a href="/" class="back-link">&larr; Back to Website</a>
+    </div>
+
+    <script>
+        const errorMsg = document.getElementById('error-msg');
+        const successMsg = document.getElementById('success-msg');
+
+        function showError(message) {
+            successMsg.style.display = 'none';
+            errorMsg.innerText = message;
+            errorMsg.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            errorMsg.style.display = 'none';
+            successMsg.innerText = message;
+            successMsg.style.display = 'block';
+        }
+
+        async function loadAccount() {
+            try {
+                const res = await fetch('/api/account');
+                if (!res.ok) {
+                    throw new Error('Please login to view your account.');
+                }
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Unable to load account.');
+                }
+
+                const { account } = data;
+                document.getElementById('account-email').innerText = account.email;
+                document.getElementById('account-role').innerText = account.isAdmin ? 'Admin' : 'User';
+                document.getElementById('account-created').innerText = account.createdAt
+                    ? new Date(account.createdAt).toLocaleDateString()
+                    : 'Unknown';
+                document.getElementById('account-name').value = account.name || '';
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        document.getElementById('account-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            const name = document.getElementById('account-name').value.trim();
+            const password = document.getElementById('account-password').value;
+            const confirm = document.getElementById('account-password-confirm').value;
+
+            if (!name) {
+                showError('Display name is required.');
+                return;
+            }
+
+            if (password && password !== confirm) {
+                showError('Passwords do not match.');
+                return;
+            }
+
+            const payload = { name };
+            if (password) payload.password = password;
+
+            try {
+                const res = await fetch('/api/account', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Update failed.');
+                }
+                showSuccess(data.message || 'Account updated.');
+                document.getElementById('account-password').value = '';
+                document.getElementById('account-password-confirm').value = '';
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        });
+
+        loadAccount();
+    </script>
+</body>
+
+</html>

@@ -288,20 +288,26 @@ async function checkLoginStatus() {
             const loginBtn = navList.querySelector('.nav-login');
 
             if (loginBtn) {
-                loginBtn.href = "#";
-                loginBtn.innerHTML = `Hi, ${data.name}`;
+                loginBtn.href = "/account.html";
+                loginBtn.innerHTML = `Account`;
                 loginBtn.style.borderColor = 'var(--color-secondary)';
                 loginBtn.style.color = 'var(--color-secondary) !important';
                 loginBtn.classList.add('logged-in'); // Additional class if needed
 
-                // Optional: Add Logout logic on click?
-                loginBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    if (confirm("Logout?")) {
+                if (!navList.querySelector('.nav-logout')) {
+                    const logoutItem = document.createElement('li');
+                    const logoutLink = document.createElement('a');
+                    logoutLink.href = '#';
+                    logoutLink.innerText = 'Logout';
+                    logoutLink.classList.add('nav-logout');
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
                         await fetch('/api/logout', { method: 'POST' });
                         window.location.reload();
-                    }
-                });
+                    });
+                    logoutItem.appendChild(logoutLink);
+                    navList.appendChild(logoutItem);
+                }
             }
         }
     } catch (e) {
