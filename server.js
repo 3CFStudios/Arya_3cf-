@@ -476,7 +476,7 @@ app.post('/api/login', authLimiter, async (req, res) => {
         if (!match) {
             const message = type === 'admin' ? 'Invalid credentials.' : 'Invalid Password';
             return res.status(400).json({ success: false, error: message });
-
+        }
         if (!user.password) {
             return res.status(400).json({ success: false, error: 'Account outdated. Please Register again.' });
         }
