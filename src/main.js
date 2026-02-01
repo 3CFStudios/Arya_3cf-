@@ -9,9 +9,11 @@ const initCursor = () => {
   cursorOutline = document.querySelector('.cursor-outline');
 
   if (!cursorDot || !cursorOutline) {
+    document.body?.classList.remove('custom-cursor');
     console.warn("Custom cursor elements not found in DOM");
     return false;
   }
+  document.body?.classList.add('custom-cursor');
   return true;
 };
 
@@ -204,14 +206,15 @@ const initCookieBanner = () => {
   if (!banner || !acceptBtn) return;
 
   // Check if already accepted
-  if (!localStorage.getItem('cookieConcent')) {
+  const hasConsent = localStorage.getItem('cookieConsent') || localStorage.getItem('cookieConcent');
+  if (!hasConsent) {
     setTimeout(() => {
       banner.classList.add('show');
     }, 2000);
   }
 
   acceptBtn.addEventListener('click', () => {
-    localStorage.setItem('cookieConcent', 'true');
+    localStorage.setItem('cookieConsent', 'true');
     banner.classList.remove('show');
   });
 };
