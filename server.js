@@ -196,6 +196,7 @@ app.post('/api/login', async (req, res) => {
                 console.log('✅ Admin Success');
                 res.cookie('admin_auth', 'true', { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
                 res.cookie('user_name', 'Admin', { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+                res.cookie('user_email', cleanEmail, { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
 
                 // Trigger Email (Don't await, send in background)
                 sendLoginEmail(cleanEmail, 'Admin');
@@ -220,6 +221,7 @@ app.post('/api/login', async (req, res) => {
                 console.log(`👤 User Success: ${user.name}`);
                 // Cookies
                 res.cookie('user_name', user.name, { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+                res.cookie('user_email', cleanEmail, { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
 
                 // Trigger Email (Don't await, send in background)
                 sendLoginEmail(cleanEmail, user.name);
@@ -238,13 +240,72 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', (req, res) => {
     res.clearCookie('admin_auth');
     res.clearCookie('user_name');
+    res.clearCookie('user_email');
     res.json({ success: true });
 });
 
 app.get('/api/auth-status', (req, res) => {
     const isAdmin = req.signedCookies.admin_auth === 'true';
     const userName = req.signedCookies.user_name || null;
-    res.json({ authenticated: isAdmin, name: userName });
+    const userEmail = req.signedCookies.user_email || null;
+    res.json({ authenticated: isAdmin, name: userName, email: userEmail });
+});
+
+app.get('/api/account', async (req, res) => {
+    const userEmail = req.signedCookies.user_email || null;
+    if (!userEmail) {
+        return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    try {
+        const user = await db.findUserByEmail(userEmail);
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'Account not found' });
+        }
+
+        res.json({
+            success: true,
+            account: {
+                name: user.name,
+                email: user.email,
+                isAdmin: !!user.isAdmin,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (e) {
+        console.error("Account Fetch Error:", e);
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+});
+
+app.put('/api/account', async (req, res) => {
+    const userEmail = req.signedCookies.user_email || null;
+    if (!userEmail) {
+        return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    const { name, password } = req.body;
+    if (!name) {
+        return res.status(400).json({ success: false, error: 'Name is required' });
+    }
+
+    try {
+        const user = await db.findUserByEmail(userEmail);
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'Account not found' });
+        }
+
+        const updates = { name };
+        if (password) {
+            updates.password = await bcrypt.hash(password, 10);
+        }
+
+        await db.updateUser(user.id, updates);
+        res.json({ success: true, message: 'Account updated successfully' });
+    } catch (e) {
+        console.error("Account Update Error:", e);
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
 });
 
 // --- Admin Specific Endpoints ---
