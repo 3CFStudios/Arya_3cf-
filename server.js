@@ -69,19 +69,29 @@ if (fs.existsSync(distPath)) {
 }
 
 // --- Email Configuration ---
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+const isEmailEnabled = process.env.EMAIL_ENABLED === 'true'
+    && process.env.EMAIL_HOST
+    && process.env.EMAIL_USER
+    && process.env.EMAIL_PASS;
+
+const transporter = isEmailEnabled
+    ? nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+    })
+    : null;
 
 async function sendLoginEmail(toEmail, userName) {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.log(`[MAIL] Skipping email for ${toEmail}: No credentials in .env`);
+    if (!isEmailEnabled || !transporter) {
+        console.log(`[MAIL] Skipping email for ${toEmail}: Email is disabled or not configured.`);
         return;
     }
 
