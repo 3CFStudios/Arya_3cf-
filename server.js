@@ -343,21 +343,6 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-async function uploadBufferToCloudinary(buffer, folder) {
-    if (!cloudinaryEnabled) {
-        throw new Error('Cloudinary is not configured.');
-    }
-    return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-            { folder, resource_type: 'image' },
-            (error, result) => {
-                if (error) return reject(error);
-                resolve(result);
-            }
-        );
-        stream.end(buffer);
-    });
-}
 
 function isValidObjectId(value) {
     return mongoose.Types.ObjectId.isValid(value);
