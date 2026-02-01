@@ -6,26 +6,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
-    build: {
-        rollupOptions: {
-            input: {
-                main: 'index.html',
-                admin: 'admin/index.html',
-                login: 'login.html'
-            }
-        }
+  base: '/', // important for Render
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        admin: resolve(__dirname, 'admin/index.html'),
+        login: resolve(__dirname, 'login.html')
+      }
     },
-    server: {
-        port: 5173,
-        proxy: {
-            '/api': {
-                target: 'http://localhost:3000',
-                changeOrigin: true,
-            },
-            '/admin': {
-                target: 'http://localhost:3000',
-                changeOrigin: true,
-            }
-        }
-    }
+    outDir: 'dist'
+  }
 });
