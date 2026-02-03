@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -39,6 +40,8 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'arya-secret-key-172010';
 let server;
 
 // --- Middleware ---
+app.disable('x-powered-by');
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(bodyParser.json());
 app.use(cookieParser(SESSION_SECRET));
