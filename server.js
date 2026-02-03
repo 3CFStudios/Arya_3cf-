@@ -123,6 +123,8 @@ if (!resp.ok) {
 
 console.log("[MAIL] Email API sent OK");
 
+}
+
 const DATA_FILE = path.join(__dirname, 'content.json');
 
 // --- Routes ---
