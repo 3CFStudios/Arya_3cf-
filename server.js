@@ -11,6 +11,7 @@ import * as db from './database.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import AppError from './utils/AppError.js';
+import { sendMail } from './services/mailer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -104,27 +105,11 @@ async function sendLoginEmail(toEmail, userName) {
         `
     };
 
-const resp = await fetch("https://api.resend.com/emails", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    from: "Arya Security <onboarding@resend.dev>",
-    to: [toEmail],
-    subject: mailOptions.subject,
-    html: mailOptions.html,
-  }),
-});
-
-if (!resp.ok) {
-  const text = await resp.text();
-  console.error("[MAIL] Email API failed:", resp.status, text);
-  return;
-}
-
-console.log("[MAIL] Email API sent OK");
+    await sendMail({
+        to: toEmail,
+        subject: mailOptions.subject,
+        html: mailOptions.html
+    });
 
 }
 
