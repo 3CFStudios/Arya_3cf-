@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import * as db from './database.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import AppError from './utils/AppError.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +36,7 @@ console.error = (...args) => captureLog('ERROR', args);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'arya-secret-key-172010';
+let server;
 
 // --- Middleware ---
 app.use(cors());
@@ -459,9 +461,55 @@ app.post('/api/content', (req, res) => {
     });
 });
 
+app.use((req, res, next) => next(new AppError(`Not Found - ${req.originalUrl}`, 404)));
 
+app.use((err, req, res, next) => {
+    if (res.headersSent) {
+        return next(err);
+    }
 
-app.listen(PORT, '0.0.0.0', () => {
+    const safeError = err || {};
+    const statusCode = Number.isInteger(safeError.statusCode) ? safeError.statusCode : 500;
+    const isOperational = safeError.isOperational === true;
+    const message = safeError.message || 'Something went wrong';
+
+    if (process.env.NODE_ENV === 'production') {
+        if (statusCode >= 500) {
+            return res.status(statusCode).json({ success: false, message: 'Something went wrong' });
+        }
+        if (isOperational) {
+            return res.status(statusCode).json({ success: false, message });
+        }
+        return res.status(statusCode).json({ success: false, message: 'Something went wrong' });
+    }
+
+    return res.status(statusCode).json({
+        success: false,
+        message,
+        error: safeError,
+        stack: safeError.stack
+    });
+});
+
+server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`Admin Panel at http://localhost:${PORT}/admin`);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
+    if (server && typeof server.close === 'function') {
+        server.close(() => process.exit(1));
+    } else {
+        process.exit(1);
+    }
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    if (server && typeof server.close === 'function') {
+        server.close(() => process.exit(1));
+    } else {
+        process.exit(1);
+    }
 });
