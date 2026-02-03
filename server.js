@@ -69,30 +69,14 @@ if (fs.existsSync(distPath)) {
 } else {
     app.use(express.static('.'));
 }
+// --- Email Configuration (API-based; no SMTP) ---
+const isEmailEnabled =
+  process.env.EMAIL_ENABLED === "true" &&
+  !!process.env.RESEND_API_KEY;
 
-// --- Email Configuration ---
-const isEmailEnabled = process.env.EMAIL_ENABLED === 'true'
-    && process.env.EMAIL_HOST
-    && process.env.EMAIL_USER
-    && process.env.EMAIL_PASS;
-
-const transporter = isEmailEnabled
-    ? nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT || '587'),
-        secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
-    })
-    : null;
 
 async function sendLoginEmail(toEmail, userName) {
-    if (!isEmailEnabled || !transporter) {
+    if (!isEmailEnabled) {
         console.log(`[MAIL] Skipping email for ${toEmail}: Email is disabled or not configured.`);
         return;
     }
@@ -117,13 +101,27 @@ async function sendLoginEmail(toEmail, userName) {
         `
     };
 
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log(`[MAIL] Login notification sent to ${toEmail}`);
-    } catch (error) {
-        console.error(`[MAIL] Error sending email to ${toEmail}:`, error);
-    }
+const resp = await fetch("https://api.resend.com/emails", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    from: "Arya Security <onboarding@resend.dev>",
+    to: [toEmail],
+    subject: mailOptions.subject,
+    html: mailOptions.html,
+  }),
+});
+
+if (!resp.ok) {
+  const text = await resp.text();
+  console.error("[MAIL] Email API failed:", resp.status, text);
+  return;
 }
+
+console.log("[MAIL] Email API sent OK");
 
 const DATA_FILE = path.join(__dirname, 'content.json');
 
