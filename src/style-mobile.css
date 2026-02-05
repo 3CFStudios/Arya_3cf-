@@ -3,6 +3,11 @@
   Includes a 769–1024px breakpoint for intermediate sizing and overflow protection.
 */
 
+:root {
+  /* Mobile header height to keep hero content below the fixed nav. */
+  --mobile-header-height: 4rem;
+}
+
 html,
 body {
   max-width: 100%;
@@ -36,11 +41,12 @@ section {
 
 nav {
   padding: 0.75rem 1rem;
+  min-height: var(--mobile-header-height);
 }
 
 .hero {
   height: auto;
-  padding-top: 7rem;
+  padding-top: calc(var(--mobile-header-height) + 3rem);
   padding-bottom: 4rem;
 }
 
@@ -111,7 +117,8 @@ nav {
   padding: 1.5rem;
 }
 
-@media (max-width: 1024px) {
+/* Consolidated mobile nav styles for <=1024px and coarse pointer devices. */
+@media (max-width: 1024px), (pointer: coarse) {
   body.nav-open {
     overflow: hidden;
     overflow-x: hidden;
@@ -128,6 +135,8 @@ nav {
     height: 100vh;
     text-align: left;
     transform: translateX(100%);
+    visibility: hidden;
+    pointer-events: none;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 6rem 2rem 2rem;
     z-index: 999;
@@ -137,6 +146,8 @@ nav {
 
   .nav-links.active {
     transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .nav-links li {
@@ -199,103 +210,6 @@ nav {
     flex-direction: column;
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .hero-actions .btn {
-    width: 100%;
-    text-align: center;
-    margin-top: 0.5rem;
-    min-height: 3rem;
-  }
-}
-
-@media (pointer: coarse) {
-  body.nav-open {
-    overflow: hidden;
-    overflow-x: hidden;
-  }
-
-  .nav-links {
-    position: fixed;
-    right: 0;
-    top: 0;
-    flex-direction: column;
-    background: rgba(5, 5, 5, 0.98);
-    backdrop-filter: blur(20px);
-    width: min(80vw, 20rem);
-    height: 100vh;
-    text-align: left;
-    transform: translateX(100%);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 6rem 2rem 2rem;
-    z-index: 999;
-    border-left: 1px solid rgba(255, 255, 255, 0.05);
-    gap: 1.25rem;
-  }
-
-  .nav-links.active {
-    transform: translateX(0);
-  }
-
-  .nav-links li {
-    margin: 0;
-  }
-
-  .nav-links a {
-    font-size: 1.1rem;
-    min-height: 3rem;
-    display: flex;
-    align-items: center;
-  }
-
-  .nav-login,
-  .nav-logout {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 3rem;
-    margin-top: 0.5rem;
-    width: 100%;
-    text-align: center;
-  }
-
-  .hamburger {
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.35rem;
-    min-width: 3rem;
-    min-height: 3rem;
-    cursor: pointer;
-  }
-
-  .hamburger span {
-    display: block;
-    width: 1.75rem;
-    height: 0.2rem;
-    background: var(--color-primary);
-    transition: 0.3s;
-  }
-
-  .hamburger.active span:nth-child(1) {
-    transform: translateY(0.45rem) rotate(45deg);
-  }
-
-  .hamburger.active span:nth-child(2) {
-    opacity: 0;
-  }
-
-  .hamburger.active span:nth-child(3) {
-    transform: translateY(-0.45rem) rotate(-45deg);
-  }
-
-  .mobile-account {
-    display: block;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    width: 100%;
   }
 
   .hero-actions .btn {
