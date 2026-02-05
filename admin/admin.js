@@ -149,7 +149,8 @@ async function apiFetch(url, options = {}) {
 }
 
 // --- INIT ---
-async function init() {
+async function initAdmin() {
+    adminRoot = document.getElementById('admin-root') || document.querySelector('main');
     // Server guarantees auth now, so just load data
     attachFormListeners();
     loadData();
@@ -172,44 +173,44 @@ async function loadData() {
 function populateForms() {
     try {
         // Hero
-        if (contentData.hero) {
-            document.getElementById('hero-titlePrefix').value = contentData.hero.titlePrefix || '';
-            document.getElementById('hero-titleSuffix').value = contentData.hero.titleSuffix || '';
-            document.getElementById('hero-subtitle').value = contentData.hero.subtitle || '';
-            document.getElementById('hero-description').value = contentData.hero.description || '';
-            document.getElementById('hero-focusList').value = contentData.hero.focusList ? contentData.hero.focusList.join('\n') : '';
+        if (currentContent.hero) {
+            document.getElementById('hero-titlePrefix').value = currentContent.hero.titlePrefix || '';
+            document.getElementById('hero-titleSuffix').value = currentContent.hero.titleSuffix || '';
+            document.getElementById('hero-subtitle').value = currentContent.hero.subtitle || '';
+            document.getElementById('hero-description').value = currentContent.hero.description || '';
+            document.getElementById('hero-focusList').value = currentContent.hero.focusList ? currentContent.hero.focusList.join('\n') : '';
         }
 
         // About
-        if (contentData.about) {
-            document.getElementById('about-p1').value = contentData.about.p1 || '';
-            document.getElementById('about-p2').value = contentData.about.p2 || '';
-            document.getElementById('about-enjoyList').value = contentData.about.enjoyList ? contentData.about.enjoyList.join('\n') : '';
-            document.getElementById('about-apartList').value = contentData.about.apartList ? contentData.about.apartList.join('\n') : '';
+        if (currentContent.about) {
+            document.getElementById('about-p1').value = currentContent.about.p1 || '';
+            document.getElementById('about-p2').value = currentContent.about.p2 || '';
+            document.getElementById('about-enjoyList').value = currentContent.about.enjoyList ? currentContent.about.enjoyList.join('\n') : '';
+            document.getElementById('about-apartList').value = currentContent.about.apartList ? currentContent.about.apartList.join('\n') : '';
         }
 
         // Achievements
-        if (contentData.achievements && contentData.achievements.length > 0) {
-            document.getElementById('achievements-items').value = contentData.achievements[0].items.join('\n');
+        if (currentContent.achievements && currentContent.achievements.length > 0) {
+            document.getElementById('achievements-items').value = currentContent.achievements[0].items.join('\n');
         }
 
         // Contact
-        if (contentData.contact) {
-            document.getElementById('contact-title').value = contentData.contact.title || '';
-            document.getElementById('contact-subtitle').value = contentData.contact.subtitle || '';
-            document.getElementById('contact-email').value = contentData.contact.email || '';
+        if (currentContent.contact) {
+            document.getElementById('contact-title').value = currentContent.contact.title || '';
+            document.getElementById('contact-subtitle').value = currentContent.contact.subtitle || '';
+            document.getElementById('contact-email').value = currentContent.contact.email || '';
 
             // Theme & Security
-            if (contentData.theme) {
+            if (currentContent.theme) {
                 const pColor = document.getElementById('theme-primary');
                 const sColor = document.getElementById('theme-secondary');
                 const bgColor = document.getElementById('theme-bg');
-                if (pColor) pColor.value = contentData.theme.primary;
-                if (sColor) sColor.value = contentData.theme.secondary;
-                if (bgColor) bgColor.value = contentData.theme.bg;
+                if (pColor) pColor.value = currentContent.theme.primary;
+                if (sColor) sColor.value = currentContent.theme.secondary;
+                if (bgColor) bgColor.value = currentContent.theme.bg;
             }
             const passEl = document.getElementById('site-password');
-            if (passEl) passEl.value = contentData.sitePassword || '';
+            if (passEl) passEl.value = currentContent.sitePassword || '';
         }
 
         renderProjects();
@@ -351,22 +352,22 @@ window.viewUserHash = function (hash) {
 
 
 function updateDashboardStats() {
-    if (!contentData) return;
+    if (!currentContent) return;
 
     const setStat = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.innerText = value;
     };
 
-    setStat('stat-projects', contentData.projects?.length || 0);
-    setStat('stat-blog', contentData.blog?.length || 0);
-    setStat('stat-skills', contentData.skills?.length || 0);
-    setStat('stat-socials', contentData.contact?.socials?.length || 0);
-    setStat('overview-projects', contentData.projects?.length || 0);
-    setStat('overview-blog', contentData.blog?.length || 0);
+    setStat('stat-projects', currentContent.projects?.length || 0);
+    setStat('stat-blog', currentContent.blog?.length || 0);
+    setStat('stat-skills', currentContent.skills?.length || 0);
+    setStat('stat-socials', currentContent.contact?.socials?.length || 0);
+    setStat('overview-projects', currentContent.projects?.length || 0);
+    setStat('overview-blog', currentContent.blog?.length || 0);
 
     // Add Total Views if stat card exists
-    setStat('stat-views', contentData.analytics?.totalViews || 0);
+    setStat('stat-views', currentContent.analytics?.totalViews || 0);
 }
 
 /* --- Render Functions --- */
@@ -375,18 +376,21 @@ function renderProjects() {
     const container = document.getElementById('projects-list');
     if (!container) return;
     container.innerHTML = '';
-    if (!contentData.projects || !Array.isArray(contentData.projects)) return;
-    contentData.projects.forEach((proj, index) => {
+    if (!currentContent.projects || !Array.isArray(currentContent.projects)) return;
+    currentContent.projects.forEach((proj, index) => {
         container.innerHTML += `
         <div class="item-list">
-            <div class="item-header"><strong>Project ${index + 1}</strong> <span class="delete-btn" onclick="deleteItem('projects', ${index})">Delete</span></div>
-            <div class="form-group"><label>Title</label><input type="text" onchange="updateArrayItem('projects', ${index}, 'title', this.value)" value="${proj.title}"></div>
-            <div class="form-group"><label>Tag</label><input type="text" onchange="updateArrayItem('projects', ${index}, 'tag', this.value)" value="${proj.tag}"></div>
-            <div class="form-group"><label>Description</label><textarea onchange="updateArrayItem('projects', ${index}, 'description', this.value)">${proj.description}</textarea></div>
-            <div class="form-group"><label>Stack</label><input type="text" onchange="updateArrayItem('projects', ${index}, 'stack', this.value)" value="${proj.stack}"></div>
+            <div class="item-header">
+                <strong>Project ${index + 1}</strong>
+                <button type="button" class="delete-btn" data-action="removeItem" data-section="projects" data-index="${index}">Delete</button>
+            </div>
+            <div class="form-group"><label>Title</label><input type="text" data-section="projects" data-index="${index}" data-field="title" value="${proj.title || ''}"></div>
+            <div class="form-group"><label>Tag</label><input type="text" data-section="projects" data-index="${index}" data-field="tag" value="${proj.tag || ''}"></div>
+            <div class="form-group"><label>Description</label><textarea data-section="projects" data-index="${index}" data-field="description">${proj.description || ''}</textarea></div>
+            <div class="form-group"><label>Stack</label><input type="text" data-section="projects" data-index="${index}" data-field="stack" value="${proj.stack || ''}"></div>
             
-            <div class="form-group"><label>Features (One per line)</label><textarea onchange="updateArrayList('projects', ${index}, 'features', this.value)">${proj.features ? proj.features.join('\n') : ''}</textarea></div>
-            <div class="form-group"><label>My Role (One per line)</label><textarea onchange="updateArrayList('projects', ${index}, 'role', this.value)">${proj.role ? proj.role.join('\n') : ''}</textarea></div>
+            <div class="form-group"><label>Features (One per line)</label><textarea data-section="projects" data-index="${index}" data-field="features" data-list="true">${proj.features ? proj.features.join('\n') : ''}</textarea></div>
+            <div class="form-group"><label>My Role (One per line)</label><textarea data-section="projects" data-index="${index}" data-field="role" data-list="true">${proj.role ? proj.role.join('\n') : ''}</textarea></div>
         </div>`;
     });
 }
@@ -395,13 +399,16 @@ function renderSkills() {
     const container = document.getElementById('skills-list');
     if (!container) return;
     container.innerHTML = '';
-    if (!contentData.skills || !Array.isArray(contentData.skills)) return;
-    contentData.skills.forEach((skill, index) => {
+    if (!currentContent.skills || !Array.isArray(currentContent.skills)) return;
+    currentContent.skills.forEach((skill, index) => {
         container.innerHTML += `
         <div class="item-list">
-            <div class="item-header"><strong>Category ${index + 1}</strong> <span class="delete-btn" onclick="deleteItem('skills', ${index})">Delete</span></div>
-            <div class="form-group"><label>Category Name</label><input type="text" onchange="updateArrayItem('skills', ${index}, 'category', this.value)" value="${skill.category}"></div>
-            <div class="form-group"><label>Items (Use • to separate)</label><input type="text" onchange="updateArrayItem('skills', ${index}, 'items', this.value)" value="${skill.items}"></div>
+            <div class="item-header">
+                <strong>Category ${index + 1}</strong>
+                <button type="button" class="delete-btn" data-action="removeItem" data-section="skills" data-index="${index}">Delete</button>
+            </div>
+            <div class="form-group"><label>Category Name</label><input type="text" data-section="skills" data-index="${index}" data-field="category" value="${skill.category || ''}"></div>
+            <div class="form-group"><label>Items (Use • to separate)</label><input type="text" data-section="skills" data-index="${index}" data-field="items" value="${skill.items || ''}"></div>
         </div>`;
     });
 }
@@ -410,13 +417,16 @@ function renderExperience() {
     const container = document.getElementById('experience-list');
     if (!container) return;
     container.innerHTML = '';
-    if (!contentData.experience || !Array.isArray(contentData.experience)) return;
-    contentData.experience.forEach((exp, index) => {
+    if (!currentContent.experience || !Array.isArray(currentContent.experience)) return;
+    currentContent.experience.forEach((exp, index) => {
         container.innerHTML += `
         <div class="item-list">
-             <div class="item-header"><strong>Role ${index + 1}</strong> </div>
-            <div class="form-group"><label>Title</label><input type="text" onchange="updateArrayItem('experience', ${index}, 'title', this.value)" value="${exp.title}"></div>
-            <div class="form-group"><label>Items (One per line)</label><textarea onchange="updateArrayList('experience', ${index}, 'items', this.value)">${exp.items.join('\n')}</textarea></div>
+             <div class="item-header">
+                <strong>Role ${index + 1}</strong>
+                <button type="button" class="delete-btn" data-action="removeItem" data-section="experience" data-index="${index}">Delete</button>
+             </div>
+            <div class="form-group"><label>Title</label><input type="text" data-section="experience" data-index="${index}" data-field="title" value="${exp.title || ''}"></div>
+            <div class="form-group"><label>Items (One per line)</label><textarea data-section="experience" data-index="${index}" data-field="items" data-list="true">${exp.items ? exp.items.join('\n') : ''}</textarea></div>
         </div>`;
     });
 }
@@ -425,8 +435,8 @@ function renderBlog() {
     const container = document.getElementById('blog-list');
     if (!container) return;
     container.innerHTML = '';
-    if (!contentData.blog || !Array.isArray(contentData.blog)) return;
-    contentData.blog.forEach((post, index) => {
+    if (!currentContent.blog || !Array.isArray(currentContent.blog)) return;
+    currentContent.blog.forEach((post, index) => {
         container.innerHTML += `
         <div class="item-list">
             <div class="item-header"><strong>Post ${index + 1}</strong> <span class="delete-btn" onclick="deleteItem('blog', ${index})">Delete</span></div>
@@ -443,13 +453,16 @@ function renderSocials() {
     const container = document.getElementById('socials-list');
     if (!container) return;
     container.innerHTML = '';
-    if (!contentData.contact || !contentData.contact.socials || !Array.isArray(contentData.contact.socials)) return;
-    contentData.contact.socials.forEach((social, index) => {
+    if (!currentContent.contact || !currentContent.contact.socials || !Array.isArray(currentContent.contact.socials)) return;
+    currentContent.contact.socials.forEach((social, index) => {
         container.innerHTML += `
         <div class="item-list">
-            <div class="item-header"><strong>${social.name}</strong> <span class="delete-btn" onclick="deleteSocial(${index})">Delete</span></div>
-            <div class="form-group"><label>Platform Name</label><input type="text" onchange="updateSocialName(${index}, this.value)" value="${social.name}"></div>
-            <div class="form-group"><label>Link URL</label><input type="text" onchange="updateSocialLink(${index}, this.value)" value="${social.link}"></div>
+            <div class="item-header">
+                <strong>${social.name || 'Social Link'}</strong>
+                <button type="button" class="delete-btn" data-action="removeItem" data-section="socials" data-index="${index}">Delete</button>
+            </div>
+            <div class="form-group"><label>Platform Name</label><input type="text" data-section="socials" data-index="${index}" data-field="name" value="${social.name || ''}"></div>
+            <div class="form-group"><label>Link URL</label><input type="text" data-section="socials" data-index="${index}" data-field="link" value="${social.link || ''}"></div>
         </div>`;
     });
 }
@@ -475,42 +488,58 @@ window.updateSocialLink = (index, value) => {
 
 window.deleteItem = (section, index) => {
     if (confirm('Are you sure?')) {
-        contentData[section].splice(index, 1);
+        currentContent[section].splice(index, 1);
         populateForms();
         updateDirtyState();
     }
 };
 
-window.addProject = () => {
-    contentData.projects.push({
-        title: "New Project", tag: "Tech", description: "Desc", stack: "Stack", role: [], features: []
+window.addProject = (event) => {
+    if (event) event.preventDefault();
+    if (!Array.isArray(currentContent.projects)) currentContent.projects = [];
+    currentContent.projects.push({
+        title: "New Project",
+        tag: "Tech",
+        description: "Desc",
+        stack: "Stack",
+        role: [],
+        features: []
     });
     renderProjects();
     updateDirtyState();
 };
 
 window.addBlogPost = () => {
-    contentData.blog.push({ title: "New Post", summary: "Summary here...", content: "Full content here..." });
+    currentContent.blog.push({ title: "New Post", summary: "Summary here...", content: "Full content here..." });
     renderBlog();
     updateDashboardStats();
     updateDirtyState();
 };
 
-window.addSkill = () => {
-    contentData.skills.push({ category: "New Category", items: "Skill 1 • Skill 2" });
+window.addSkill = (event) => {
+    if (event) event.preventDefault();
+    if (!Array.isArray(currentContent.skills)) currentContent.skills = [];
+    currentContent.skills.push({ category: "New Category", items: "Skill 1 • Skill 2" });
     renderSkills();
     updateDashboardStats();
     updateDirtyState();
 };
 
-window.addExperience = () => {
-    contentData.experience.push({ title: "New Role", subtitle: "", items: ["Responsibility 1"] });
+window.addExperience = (event) => {
+    if (event) event.preventDefault();
+    if (!Array.isArray(currentContent.experience)) currentContent.experience = [];
+    currentContent.experience.push({ title: "New Role", subtitle: "", items: ["Responsibility 1"] });
     renderExperience();
     updateDirtyState();
 };
 
-window.addSocial = () => {
-    contentData.contact.socials.push({ name: "New Platform", link: "https://" });
+window.addSocial = (event) => {
+    if (event) event.preventDefault();
+    logDebug('DEBUG admin addSocial called');
+    if (!currentContent.contact) currentContent.contact = {};
+    if (!Array.isArray(currentContent.contact.socials)) currentContent.contact.socials = [];
+    currentContent.contact.socials.push({ name: "New Platform", link: "https://" });
+    logDebug('DEBUG admin socials length after push:', currentContent.contact.socials.length);
     renderSocials();
     updateDashboardStats();
     updateDirtyState();
@@ -523,11 +552,32 @@ window.updateSocialName = (index, value) => {
 
 window.deleteSocial = (index) => {
     if (confirm('Delete this social link?')) {
-        contentData.contact.socials.splice(index, 1);
+        currentContent.contact.socials.splice(index, 1);
         renderSocials();
         updateDashboardStats();
         updateDirtyState();
     }
+};
+
+window.removeItem = (event) => {
+    if (event) event.preventDefault();
+    const btn = event?.target?.closest('[data-action="removeItem"]');
+    if (!btn) return;
+    const section = btn.dataset.section;
+    const index = Number(btn.dataset.index);
+    if (!section || Number.isNaN(index)) return;
+    if (!confirm('Are you sure?')) return;
+    const collection = getSectionArray(section);
+    collection.splice(index, 1);
+    if (section === 'projects') renderProjects();
+    if (section === 'skills') renderSkills();
+    if (section === 'experience') renderExperience();
+    if (section === 'socials') {
+        renderSocials();
+        updateDashboardStats();
+        updateDirtyState();
+    }
+    updateDirtyState();
 };
 
 window.showSection = (sectionId) => {
@@ -590,11 +640,11 @@ window.saveContent = async () => {
 /* --- Custom Sections --- */
 
 function renderCustomSections() {
-    if (!contentData.customSections) contentData.customSections = [];
+    if (!currentContent.customSections) currentContent.customSections = [];
     const container = document.getElementById('custom-sections-list');
     container.innerHTML = '';
 
-    contentData.customSections.forEach((section, index) => {
+    currentContent.customSections.forEach((section, index) => {
         container.innerHTML += `
         <div class="item-list">
             <div class="item-header">
@@ -626,17 +676,17 @@ function renderCustomSections() {
 }
 
 window.addCustomSection = () => {
-    if (!contentData.customSections) contentData.customSections = [];
+    if (!currentContent.customSections) currentContent.customSections = [];
     const id = 'custom-' + Date.now();
-    contentData.customSections.push({
+    currentContent.customSections.push({
         id: id,
         title: 'New Section',
         content: 'Your content here...',
         style: 'card'
     });
     // Also add to section order
-    if (!contentData.sectionOrder) contentData.sectionOrder = ["hero", "about", "projects", "skills", "experience", "blog", "contact"];
-    contentData.sectionOrder.push(id);
+    if (!currentContent.sectionOrder) currentContent.sectionOrder = ["hero", "about", "projects", "skills", "experience", "blog", "contact"];
+    currentContent.sectionOrder.push(id);
     renderCustomSections();
     renderSectionOrder();
     updateDirtyState();
@@ -649,11 +699,11 @@ window.updateCustomSection = (index, key, value) => {
 
 window.deleteCustomSection = (index) => {
     if (confirm('Delete this custom section?')) {
-        const id = contentData.customSections[index].id;
-        contentData.customSections.splice(index, 1);
+        const id = currentContent.customSections[index].id;
+        currentContent.customSections.splice(index, 1);
         // Remove from section order
-        const orderIndex = contentData.sectionOrder.indexOf(id);
-        if (orderIndex > -1) contentData.sectionOrder.splice(orderIndex, 1);
+        const orderIndex = currentContent.sectionOrder.indexOf(id);
+        if (orderIndex > -1) currentContent.sectionOrder.splice(orderIndex, 1);
         renderCustomSections();
         renderSectionOrder();
         updateDirtyState();
@@ -673,15 +723,15 @@ const sectionLabels = {
 };
 
 function renderSectionOrder() {
-    if (!contentData.sectionOrder) {
-        contentData.sectionOrder = ["hero", "about", "projects", "skills", "experience", "blog", "contact"];
+    if (!currentContent.sectionOrder) {
+        currentContent.sectionOrder = ["hero", "about", "projects", "skills", "experience", "blog", "contact"];
     }
     const container = document.getElementById('section-order-list');
     container.innerHTML = '';
 
-    contentData.sectionOrder.forEach((sectionId, index) => {
+    currentContent.sectionOrder.forEach((sectionId, index) => {
         const isCustom = sectionId.startsWith('custom-');
-        const customSection = isCustom ? contentData.customSections.find(s => s.id === sectionId) : null;
+        const customSection = isCustom ? currentContent.customSections.find(s => s.id === sectionId) : null;
         const label = isCustom ? `✨ ${customSection?.title || sectionId}` : (sectionLabels[sectionId] || sectionId);
 
         container.innerHTML += `
@@ -689,7 +739,7 @@ function renderSectionOrder() {
             <span style="font-size: 0.9rem;">${label}</span>
             <div style="display: flex; gap: 0.5rem;">
                 <button class="quick-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="moveSectionUp(${index})" ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}>⬆️</button>
-                <button class="quick-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="moveSectionDown(${index})" ${index === contentData.sectionOrder.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}>⬇️</button>
+                <button class="quick-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="moveSectionDown(${index})" ${index === currentContent.sectionOrder.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}>⬇️</button>
             </div>
         </div>`;
     });
@@ -697,24 +747,24 @@ function renderSectionOrder() {
 
 window.moveSectionUp = (index) => {
     if (index <= 0) return;
-    const temp = contentData.sectionOrder[index];
-    contentData.sectionOrder[index] = contentData.sectionOrder[index - 1];
-    contentData.sectionOrder[index - 1] = temp;
+    const temp = currentContent.sectionOrder[index];
+    currentContent.sectionOrder[index] = currentContent.sectionOrder[index - 1];
+    currentContent.sectionOrder[index - 1] = temp;
     renderSectionOrder();
     updateDirtyState();
 };
 
 window.moveSectionDown = (index) => {
-    if (index >= contentData.sectionOrder.length - 1) return;
-    const temp = contentData.sectionOrder[index];
-    contentData.sectionOrder[index] = contentData.sectionOrder[index + 1];
-    contentData.sectionOrder[index + 1] = temp;
+    if (index >= currentContent.sectionOrder.length - 1) return;
+    const temp = currentContent.sectionOrder[index];
+    currentContent.sectionOrder[index] = currentContent.sectionOrder[index + 1];
+    currentContent.sectionOrder[index + 1] = temp;
     renderSectionOrder();
     updateDirtyState();
 };
 
 window.exportData = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(contentData, null, 2));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentContent, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "arya_website_backup_" + new Date().toISOString().split('T')[0] + ".json");
@@ -725,8 +775,8 @@ window.exportData = () => {
 
 window.resetAnalytics = () => {
     if (confirm('Are you sure you want to reset the view counter to 0?')) {
-        if (!contentData.analytics) contentData.analytics = { totalViews: 0 };
-        contentData.analytics.totalViews = 0;
+        if (!currentContent.analytics) currentContent.analytics = { totalViews: 0 };
+        currentContent.analytics.totalViews = 0;
         updateDashboardStats();
         saveContent();
     }
@@ -804,4 +854,4 @@ function stopLogPolling() {
     }
 }
 
-init();
+document.addEventListener('DOMContentLoaded', initAdmin);
