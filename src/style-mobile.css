@@ -1,11 +1,27 @@
 /*
-  Breakpoints expanded to 1024px with pointer media queries for touch devices, aligning with 320–480 (mobile),
-  481–768 (tablet), and 769–1024 (small desktop) responsive guidance.
+  Mobile layout now covers large phones/tablets up to 1024px and any touch device.
+  Includes a 769–1024px breakpoint for intermediate sizing and overflow protection.
 */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
 
 body {
   font-size: 1rem;
   line-height: 1.7;
+}
+
+nav,
+section,
+footer,
+.hero,
+.container,
+.contact-section {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 section {
@@ -98,11 +114,12 @@ nav {
 @media (max-width: 1024px) {
   body.nav-open {
     overflow: hidden;
+    overflow-x: hidden;
   }
 
   .nav-links {
     position: fixed;
-    right: -100%;
+    right: 0;
     top: 0;
     flex-direction: column;
     background: rgba(5, 5, 5, 0.98);
@@ -110,7 +127,8 @@ nav {
     width: min(80vw, 20rem);
     height: 100vh;
     text-align: left;
-    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 6rem 2rem 2rem;
     z-index: 999;
     border-left: 1px solid rgba(255, 255, 255, 0.05);
@@ -118,7 +136,7 @@ nav {
   }
 
   .nav-links.active {
-    right: 0;
+    transform: translateX(0);
   }
 
   .nav-links li {
@@ -180,6 +198,7 @@ nav {
   .hero-actions {
     flex-direction: column;
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .hero-actions .btn {
@@ -193,11 +212,12 @@ nav {
 @media (pointer: coarse) {
   body.nav-open {
     overflow: hidden;
+    overflow-x: hidden;
   }
 
   .nav-links {
     position: fixed;
-    right: -100%;
+    right: 0;
     top: 0;
     flex-direction: column;
     background: rgba(5, 5, 5, 0.98);
@@ -205,7 +225,8 @@ nav {
     width: min(80vw, 20rem);
     height: 100vh;
     text-align: left;
-    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 6rem 2rem 2rem;
     z-index: 999;
     border-left: 1px solid rgba(255, 255, 255, 0.05);
@@ -213,7 +234,7 @@ nav {
   }
 
   .nav-links.active {
-    right: 0;
+    transform: translateX(0);
   }
 
   .nav-links li {

@@ -1,4 +1,4 @@
-
+// Mobile navigation now targets large phones/tablets up to 1024px and touch devices for consistent layouts.
 // Fetch and populate content
 async function loadContent() {
     try {
@@ -259,7 +259,7 @@ async function loadContent() {
     // Mobile Menu Toggle
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
-    const mobileNavQuery = window.matchMedia('(max-width: 768px)');
+    const mobileNavQuery = window.matchMedia('(max-width: 1024px), (pointer: coarse)');
 
     const closeMenu = () => {
         if (!hamburger || !navLinks) return;
