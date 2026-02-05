@@ -413,6 +413,8 @@ app.get('/api/content', async (req, res) => {
         let content = await db.getContent();
         if (!content) content = {};
 
+        console.log('[content] loaded from mongo');
+
         // Track analytics (simplified: increment on data fetch)
         // We only increment if NOT logged in as admin to keep it clean
         if (req.signedCookies.admin_auth !== 'true') {
@@ -428,21 +430,36 @@ app.get('/api/content', async (req, res) => {
     }
 });
 
+function deepMerge(existing, incoming) {
+    if (incoming === undefined) return existing;
+    if (Array.isArray(incoming)) return incoming;
+    if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+        const result = { ...(existing && typeof existing === 'object' ? existing : {}) };
+        Object.keys(incoming).forEach((key) => {
+            result[key] = deepMerge(result[key], incoming[key]);
+        });
+        return result;
+    }
+    return incoming;
+}
+
 async function handleContentUpdate(req, res) {
     if (req.signedCookies.admin_auth !== 'true') {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const updates = req.body;
-    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+    const incoming = req.body;
+    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
         return res.status(400).json({ error: 'Invalid content payload' });
     }
 
     try {
+        console.log('[content] incoming keys', Object.keys(incoming));
         const existing = (await db.getContent()) || {};
-        const updatedContent = { ...existing, ...updates };
-        await db.setContent(updatedContent);
-        return res.json(updatedContent);
+        const merged = deepMerge(existing, incoming);
+        console.log('[content] saving to mongo');
+        const saved = await db.setContent(merged);
+        return res.json(saved);
     } catch (error) {
         console.error("Content Update Error:", error);
         return res.status(500).json({ error: 'Failed to save data' });

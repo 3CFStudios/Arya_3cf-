@@ -169,12 +169,12 @@ export async function getContent() {
 
 export async function setContent(newContent) {
   await connectDB();
-  await Content.updateOne(
+  const updated = await Content.findOneAndUpdate(
     { key: "site_content" },
     { $set: { value: newContent } },
-    { upsert: true }
-  );
-  return true;
+    { upsert: true, new: true }
+  ).lean();
+  return updated?.value || newContent;
 }
 
 // Connect on load (keeps behavior similar to your SQLite init)

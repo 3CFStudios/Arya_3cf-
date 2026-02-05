@@ -557,6 +557,7 @@ window.deleteSocial = (index) => {
         updateDashboardStats();
         updateDirtyState();
     }
+    updateDirtyState();
 };
 
 window.removeItem = (event) => {
