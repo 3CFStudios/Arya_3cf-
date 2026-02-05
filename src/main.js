@@ -1,15 +1,19 @@
-
-
+// Touch-input detection keeps the custom cursor disabled on touch devices (mobile layout up to 1024px).
 // Custom Cursor Setup
 let cursorDot;
 let cursorOutline;
 let cursorMoveHandler;
+let cursorDisabledForTouch = false;
 
 const hasTouchInput = () => {
-  return navigator.maxTouchPoints > 1 || window.matchMedia('(pointer: coarse)').matches;
+  return (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
+    || window.matchMedia('(pointer: coarse)').matches;
 };
 
 const initCursor = () => {
+  if (cursorDisabledForTouch) {
+    return false;
+  }
   cursorDot = document.querySelector('.cursor-dot');
   cursorOutline = document.querySelector('.cursor-outline');
 
@@ -83,6 +87,7 @@ const addCursorListeners = () => {
 // Start initialization when DOM is ready
 const startCursorSystem = () => {
   if (hasTouchInput()) {
+    cursorDisabledForTouch = true;
     disableCustomCursor();
     return;
   }
