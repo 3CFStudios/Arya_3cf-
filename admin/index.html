@@ -44,7 +44,7 @@
     <button onclick="logout()" class="logout-btn">🚪 LOGOUT</button>
   </aside>
 
-  <main>
+  <main id="admin-root">
     <!-- Dashboard -->
     <div id="dashboard" class="section-editor active">
       <header>
@@ -84,8 +84,8 @@
 
       <h3 class="section-heading">Quick Actions</h3>
       <div class="quick-actions">
-        <button class="quick-btn" onclick="showSection('projects'); addProject();">➕ Add Project</button>
-        <button class="quick-btn" onclick="showSection('blog'); addBlogPost();">➕ Add Blog Post</button>
+        <button class="quick-btn" type="button" data-action="addProject" data-target-section="projects">➕ Add Project</button>
+        <button class="quick-btn" type="button" data-action="addBlogPost" data-target-section="blog">➕ Add Blog Post</button>
         <button class="quick-btn" onclick="showSection('hero');">✏️ Edit Hero</button>
         <button class="quick-btn" onclick="window.open('/', '_blank');">👁️ View Site</button>
       </div>
@@ -141,7 +141,7 @@
         <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
       </header>
       <div id="projects-list"></div>
-      <button class="add-btn" onclick="addProject()">➕ Add New Project</button>
+      <button class="add-btn" id="addProjectBtn" type="button" data-action="addProject">➕ Add New Project</button>
     </div>
 
     <!-- Skills -->
@@ -151,7 +151,7 @@
         <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
       </header>
       <div id="skills-list"></div>
-      <button class="add-btn" onclick="addSkill()">➕ Add Skill Category</button>
+      <button class="add-btn" id="addSkillBtn" type="button" data-action="addSkill">➕ Add Skill Category</button>
     </div>
 
     <!-- Experience -->
@@ -161,7 +161,7 @@
         <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
       </header>
       <div id="experience-list"></div>
-      <button class="add-btn" onclick="addExperience()">➕ Add Experience</button>
+      <button class="add-btn" id="addExperienceBtn" type="button" data-action="addExperience">➕ Add Experience</button>
     </div>
 
     <!-- Achievements -->
@@ -181,7 +181,7 @@
         <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
       </header>
       <div id="blog-list"></div>
-      <button class="add-btn" onclick="addBlogPost()">➕ Add New Post</button>
+      <button class="add-btn" id="addBlogPostBtn" type="button" data-action="addBlogPost">➕ Add New Post</button>
     </div>
 
     <!-- Contact -->
@@ -195,7 +195,7 @@
       <div class="form-group"><label>Email Address</label><input type="email" id="contact-email"></div>
       <h3 class="section-heading section-heading--spaced">Social Links</h3>
       <div id="socials-list"></div>
-      <button class="add-btn" onclick="addSocial()">➕ Add Social Link</button>
+      <button class="add-btn" id="addSocialBtn" type="button" data-action="addSocial">➕ Add Social Link</button>
     </div>
 
     <!-- Custom Sections -->
