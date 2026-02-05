@@ -1,5 +1,126 @@
+const DEBUG = false;
 let contentData = {};
-let lastLoadedContent = {};
+let baselineContent = {};
+
+const logDebug = (...args) => {
+    if (!DEBUG) return;
+    console.log(...args);
+};
+
+const deepClone = (value) => {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        } catch (err) {
+            // fall back to JSON clone
+        }
+    }
+    return JSON.parse(JSON.stringify(value || {}));
+};
+
+const stableStringify = (value) => {
+    if (value === null || typeof value !== 'object') {
+        return JSON.stringify(value);
+    }
+    if (Array.isArray(value)) {
+        return `[${value.map(stableStringify).join(',')}]`;
+    }
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+};
+
+const isDirty = (baseline, current) => stableStringify(baseline) !== stableStringify(current);
+
+const diffContent = (baseline, current) => {
+    const patch = {};
+    const baselineObj = baseline || {};
+    const currentObj = current || {};
+    const keys = new Set([...Object.keys(baselineObj), ...Object.keys(currentObj)]);
+
+    keys.forEach((key) => {
+        if (stableStringify(baselineObj[key]) !== stableStringify(currentObj[key])) {
+            patch[key] = currentObj[key];
+        }
+    });
+
+    return patch;
+};
+
+const readFormState = () => {
+    const current = deepClone(contentData || {});
+    const getValue = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return '';
+        if (el.type === 'checkbox') return el.checked;
+        return el.value ?? '';
+    };
+    const getList = (id) => getValue(id).split('\n').map((line) => line.trim()).filter(Boolean);
+
+    current.hero = {
+        ...(current.hero || {}),
+        titlePrefix: getValue('hero-titlePrefix'),
+        titleSuffix: getValue('hero-titleSuffix'),
+        subtitle: getValue('hero-subtitle'),
+        description: getValue('hero-description'),
+        focusList: getList('hero-focusList')
+    };
+
+    current.about = {
+        ...(current.about || {}),
+        p1: getValue('about-p1'),
+        p2: getValue('about-p2'),
+        enjoyList: getList('about-enjoyList'),
+        apartList: getList('about-apartList')
+    };
+
+    if (!Array.isArray(current.achievements)) current.achievements = [];
+    if (!current.achievements[0]) current.achievements[0] = { items: [] };
+    current.achievements[0].items = getList('achievements-items');
+
+    current.contact = {
+        ...(current.contact || {}),
+        title: getValue('contact-title'),
+        subtitle: getValue('contact-subtitle'),
+        email: getValue('contact-email')
+    };
+
+    current.theme = {
+        primary: getValue('theme-primary') || current.theme?.primary || '#00f3ff',
+        secondary: getValue('theme-secondary') || current.theme?.secondary || '#bd00ff',
+        bg: getValue('theme-bg') || current.theme?.bg || '#050505'
+    };
+
+    current.sitePassword = getValue('site-password');
+
+    return current;
+};
+
+const updateDirtyState = () => {
+    const currentContent = readFormState();
+    const dirty = isDirty(baselineContent, currentContent);
+    const saveBtn = document.querySelector('.save-btn');
+    if (saveBtn) {
+        saveBtn.disabled = !dirty;
+    }
+
+    logDebug('DEBUG admin content baseline keys:', Object.keys(baselineContent || {}));
+    logDebug('DEBUG admin content current keys:', Object.keys(currentContent || {}));
+    logDebug('DEBUG admin content dirty:', dirty);
+
+    return { currentContent, dirty };
+};
+
+const attachFormListeners = () => {
+    const handler = (event) => {
+        const target = event.target;
+        if (!target) return;
+        if (target.matches('input, textarea, select, [contenteditable="true"]')) {
+            updateDirtyState();
+        }
+    };
+    document.addEventListener('input', handler);
+    document.addEventListener('change', handler);
+};
 
 async function apiFetch(url, options = {}) {
     const res = await fetch(url, {
@@ -30,6 +151,7 @@ async function apiFetch(url, options = {}) {
 // --- INIT ---
 async function init() {
     // Server guarantees auth now, so just load data
+    attachFormListeners();
     loadData();
 }
 
@@ -42,8 +164,9 @@ async function logout() {
 
 async function loadData() {
     contentData = await apiFetch('/api/content');
-    lastLoadedContent = JSON.parse(JSON.stringify(contentData || {}));
+    baselineContent = deepClone(contentData || {});
     populateForms();
+    updateDirtyState();
 }
 
 function populateForms() {
@@ -336,21 +459,25 @@ function renderSocials() {
 
 window.updateArrayItem = (section, index, key, value) => {
     contentData[section][index][key] = value;
+    updateDirtyState();
 };
 
 // For splitting textarea lines into array
 window.updateArrayList = (section, index, key, value) => {
     contentData[section][index][key] = value.split('\n').filter(line => line.trim() !== '');
+    updateDirtyState();
 };
 
 window.updateSocialLink = (index, value) => {
     contentData.contact.socials[index].link = value;
+    updateDirtyState();
 };
 
 window.deleteItem = (section, index) => {
     if (confirm('Are you sure?')) {
         contentData[section].splice(index, 1);
         populateForms();
+        updateDirtyState();
     }
 };
 
@@ -359,33 +486,39 @@ window.addProject = () => {
         title: "New Project", tag: "Tech", description: "Desc", stack: "Stack", role: [], features: []
     });
     renderProjects();
+    updateDirtyState();
 };
 
 window.addBlogPost = () => {
     contentData.blog.push({ title: "New Post", summary: "Summary here...", content: "Full content here..." });
     renderBlog();
     updateDashboardStats();
+    updateDirtyState();
 };
 
 window.addSkill = () => {
     contentData.skills.push({ category: "New Category", items: "Skill 1 • Skill 2" });
     renderSkills();
     updateDashboardStats();
+    updateDirtyState();
 };
 
 window.addExperience = () => {
     contentData.experience.push({ title: "New Role", subtitle: "", items: ["Responsibility 1"] });
     renderExperience();
+    updateDirtyState();
 };
 
 window.addSocial = () => {
     contentData.contact.socials.push({ name: "New Platform", link: "https://" });
     renderSocials();
     updateDashboardStats();
+    updateDirtyState();
 };
 
 window.updateSocialName = (index, value) => {
     contentData.contact.socials[index].name = value;
+    updateDirtyState();
 };
 
 window.deleteSocial = (index) => {
@@ -393,6 +526,7 @@ window.deleteSocial = (index) => {
         contentData.contact.socials.splice(index, 1);
         renderSocials();
         updateDashboardStats();
+        updateDirtyState();
     }
 };
 
@@ -426,90 +560,32 @@ window.showSection = (sectionId) => {
 
 
 window.saveContent = async () => {
-    const getValue = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value : '';
-    };
-
-    const getList = (id) => {
-        const val = getValue(id);
-        return val.split('\n').filter(x => x.trim());
-    };
-
-    // Hero
-    if (contentData.hero) {
-        contentData.hero.titlePrefix = getValue('hero-titlePrefix');
-        contentData.hero.titleSuffix = getValue('hero-titleSuffix');
-        contentData.hero.subtitle = getValue('hero-subtitle');
-        contentData.hero.description = getValue('hero-description');
-        contentData.hero.focusList = getList('hero-focusList');
-    }
-
-    // About
-    if (contentData.about) {
-        contentData.about.p1 = getValue('about-p1');
-        contentData.about.p2 = getValue('about-p2');
-        contentData.about.enjoyList = getList('about-enjoyList');
-        contentData.about.apartList = getList('about-apartList');
-    }
-
-    // Achievements
-    if (contentData.achievements && contentData.achievements.length > 0) {
-        contentData.achievements[0].items = getList('achievements-items');
-    }
-
-    // Contact
-    if (contentData.contact) {
-        contentData.contact.title = getValue('contact-title');
-        contentData.contact.subtitle = getValue('contact-subtitle');
-        contentData.contact.email = getValue('contact-email');
-    }
-
-    // Theme & Security
-    contentData.theme = {
-        primary: getValue('theme-primary') || contentData.theme?.primary || '#00f3ff',
-        secondary: getValue('theme-secondary') || contentData.theme?.secondary || '#bd00ff',
-        bg: getValue('theme-bg') || contentData.theme?.bg || '#050505'
-    };
-    contentData.sitePassword = getValue('site-password');
-
     try {
-        const updates = buildContentUpdates();
-        if (Object.keys(updates).length === 0) {
-            alert('No changes to save.');
+        const currentContent = readFormState();
+        const patch = diffContent(baselineContent, currentContent);
+
+        logDebug('DEBUG admin content patch keys:', Object.keys(patch));
+
+        if (Object.keys(patch).length === 0) {
+            alert('No changes to be made.');
             return;
         }
 
-        await apiFetch('/api/content', {
+        const serverContent = await apiFetch('/api/content', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates)
+            body: JSON.stringify(patch)
         });
 
         alert('Saved successfully!');
-        await loadData();
+        contentData = deepClone(serverContent || {});
+        baselineContent = deepClone(serverContent || {});
+        updateDirtyState();
     } catch (e) {
         console.error("Save error:", e);
         alert('Network error. Check console for details.');
     }
 };
-
-function buildContentUpdates() {
-    const updates = {};
-    const current = contentData || {};
-    const previous = lastLoadedContent || {};
-    const keys = new Set([...Object.keys(current), ...Object.keys(previous)]);
-
-    keys.forEach((key) => {
-        const currentValue = current[key];
-        const previousValue = previous[key];
-        if (JSON.stringify(currentValue) !== JSON.stringify(previousValue)) {
-            updates[key] = currentValue;
-        }
-    });
-
-    return updates;
-}
 
 /* --- Custom Sections --- */
 
@@ -563,10 +639,12 @@ window.addCustomSection = () => {
     contentData.sectionOrder.push(id);
     renderCustomSections();
     renderSectionOrder();
+    updateDirtyState();
 };
 
 window.updateCustomSection = (index, key, value) => {
     contentData.customSections[index][key] = value;
+    updateDirtyState();
 };
 
 window.deleteCustomSection = (index) => {
@@ -578,6 +656,7 @@ window.deleteCustomSection = (index) => {
         if (orderIndex > -1) contentData.sectionOrder.splice(orderIndex, 1);
         renderCustomSections();
         renderSectionOrder();
+        updateDirtyState();
     }
 };
 
@@ -622,6 +701,7 @@ window.moveSectionUp = (index) => {
     contentData.sectionOrder[index] = contentData.sectionOrder[index - 1];
     contentData.sectionOrder[index - 1] = temp;
     renderSectionOrder();
+    updateDirtyState();
 };
 
 window.moveSectionDown = (index) => {
@@ -630,6 +710,7 @@ window.moveSectionDown = (index) => {
     contentData.sectionOrder[index] = contentData.sectionOrder[index + 1];
     contentData.sectionOrder[index + 1] = temp;
     renderSectionOrder();
+    updateDirtyState();
 };
 
 window.exportData = () => {
