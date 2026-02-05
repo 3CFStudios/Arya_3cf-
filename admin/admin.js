@@ -1,4 +1,5 @@
 let contentData = {};
+let lastLoadedContent = {};
 
 async function apiFetch(url, options = {}) {
     const res = await fetch(url, {
@@ -41,6 +42,7 @@ async function logout() {
 
 async function loadData() {
     contentData = await apiFetch('/api/content');
+    lastLoadedContent = JSON.parse(JSON.stringify(contentData || {}));
     populateForms();
 }
 
@@ -472,24 +474,42 @@ window.saveContent = async () => {
     contentData.sitePassword = getValue('site-password');
 
     try {
-        const result = await apiFetch('/api/content', {
-            method: 'POST',
+        const updates = buildContentUpdates();
+        if (Object.keys(updates).length === 0) {
+            alert('No changes to save.');
+            return;
+        }
+
+        await apiFetch('/api/content', {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(contentData)
+            body: JSON.stringify(updates)
         });
 
-        if (result.success) {
-            alert('Saved successfully!');
-            // Refresh dashboard stats after save
-            updateDashboardStats();
-        } else {
-            alert('Error: ' + (result.error || 'Save failed'));
-        }
+        alert('Saved successfully!');
+        await loadData();
     } catch (e) {
         console.error("Save error:", e);
         alert('Network error. Check console for details.');
     }
 };
+
+function buildContentUpdates() {
+    const updates = {};
+    const current = contentData || {};
+    const previous = lastLoadedContent || {};
+    const keys = new Set([...Object.keys(current), ...Object.keys(previous)]);
+
+    keys.forEach((key) => {
+        const currentValue = current[key];
+        const previousValue = previous[key];
+        if (JSON.stringify(currentValue) !== JSON.stringify(previousValue)) {
+            updates[key] = currentValue;
+        }
+    });
+
+    return updates;
+}
 
 /* --- Custom Sections --- */
 
