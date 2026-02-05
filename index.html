@@ -1,16 +1,17 @@
+<!-- Breakpoints expanded to 1024px with pointer media queries for touch devices, aligning with 320–480 (mobile), 481–768 (tablet), and 769–1024 (small desktop) guidance. -->
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ARYA | Builder. Tech Nerd. Systems Enjoyer.</title>
   <!-- Custom Cursor -->
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/renderer.js"></script>
   <link rel="stylesheet" href="./src/style.css">
-  <link rel="stylesheet" href="./src/style-mobile.css" media="(max-width: 768px)">
-  <link rel="stylesheet" href="./src/style-desktop.css" media="(min-width: 769px)">
+  <link rel="stylesheet" href="./src/style-mobile.css" media="(max-width: 1024px), (pointer: coarse)">
+  <link rel="stylesheet" href="./src/style-desktop.css" media="(min-width: 1025px)">
 </head>
 
 <body>
