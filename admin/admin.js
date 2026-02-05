@@ -1,7 +1,6 @@
 const DEBUG = false;
-let currentContent = {};
+let contentData = {};
 let baselineContent = {};
-let adminRoot = null;
 
 const logDebug = (...args) => {
     if (!DEBUG) return;
@@ -48,7 +47,7 @@ const diffContent = (baseline, current) => {
 };
 
 const readFormState = () => {
-    const current = deepClone(currentContent || {});
+    const current = deepClone(contentData || {});
     const getValue = (id) => {
         const el = document.getElementById(id);
         if (!el) return '';
@@ -97,7 +96,7 @@ const readFormState = () => {
 };
 
 const updateDirtyState = () => {
-    currentContent = readFormState();
+    const currentContent = readFormState();
     const dirty = isDirty(baselineContent, currentContent);
     const saveBtn = document.querySelector('.save-btn');
     if (saveBtn) {
@@ -111,69 +110,16 @@ const updateDirtyState = () => {
     return { currentContent, dirty };
 };
 
-const getSectionArray = (section) => {
-    if (section === 'socials') {
-        if (!currentContent.contact) currentContent.contact = {};
-        if (!Array.isArray(currentContent.contact.socials)) currentContent.contact.socials = [];
-        return currentContent.contact.socials;
-    }
-    if (!Array.isArray(currentContent[section])) currentContent[section] = [];
-    return currentContent[section];
-};
-
 const attachFormListeners = () => {
-    if (!adminRoot) return;
-    const handleFieldUpdate = (event) => {
-        if (!event.target.matches('input,textarea,select')) return;
-        const { section, index, field, list } = event.target.dataset;
-        if (!section || field === undefined) return;
-        const targetIndex = Number(index);
-        if (Number.isNaN(targetIndex)) return;
-        const collection = getSectionArray(section);
-        if (!collection[targetIndex]) collection[targetIndex] = {};
-        const value = list === 'true'
-            ? event.target.value.split('\n').map((line) => line.trim()).filter(Boolean)
-            : event.target.value;
-        collection[targetIndex][field] = value;
-        updateDirtyState();
+    const handler = (event) => {
+        const target = event.target;
+        if (!target) return;
+        if (target.matches('input, textarea, select, [contenteditable="true"]')) {
+            updateDirtyState();
+        }
     };
-    adminRoot.addEventListener('click', (event) => {
-        const btn = event.target.closest('button,[data-action]');
-        if (!btn || !adminRoot.contains(btn)) return;
-        const action = btn.dataset.action || btn.id;
-        if (!action) return;
-        if (['addProject', 'addSkill', 'addExperience', 'addSocial', 'addBlogPost', 'removeItem'].includes(action)) {
-            event.preventDefault();
-        }
-        if (btn.dataset.targetSection) {
-            showSection(btn.dataset.targetSection);
-        }
-        switch (action) {
-            case 'addProject':
-                window.addProject(event);
-                break;
-            case 'addSkill':
-                window.addSkill(event);
-                break;
-            case 'addExperience':
-                window.addExperience(event);
-                break;
-            case 'addSocial':
-                window.addSocial(event);
-                break;
-            case 'addBlogPost':
-                window.addBlogPost(event);
-                break;
-            case 'removeItem':
-                window.removeItem(event);
-                break;
-            default:
-                break;
-        }
-    });
-
-    adminRoot.addEventListener('input', handleFieldUpdate);
-    adminRoot.addEventListener('change', handleFieldUpdate);
+    document.addEventListener('input', handler);
+    document.addEventListener('change', handler);
 };
 
 async function apiFetch(url, options = {}) {
@@ -218,8 +164,8 @@ async function logout() {
 // --- DATA LOADING & FORM ---
 
 async function loadData() {
-    currentContent = await apiFetch('/api/content');
-    baselineContent = deepClone(currentContent || {});
+    contentData = await apiFetch('/api/content');
+    baselineContent = deepClone(contentData || {});
     populateForms();
     updateDirtyState();
 }
@@ -525,18 +471,18 @@ function renderSocials() {
 /* --- Logic Helpers --- */
 
 window.updateArrayItem = (section, index, key, value) => {
-    currentContent[section][index][key] = value;
+    contentData[section][index][key] = value;
     updateDirtyState();
 };
 
 // For splitting textarea lines into array
 window.updateArrayList = (section, index, key, value) => {
-    currentContent[section][index][key] = value.split('\n').filter(line => line.trim() !== '');
+    contentData[section][index][key] = value.split('\n').filter(line => line.trim() !== '');
     updateDirtyState();
 };
 
 window.updateSocialLink = (index, value) => {
-    currentContent.contact.socials[index].link = value;
+    contentData.contact.socials[index].link = value;
     updateDirtyState();
 };
 
@@ -563,9 +509,7 @@ window.addProject = (event) => {
     updateDirtyState();
 };
 
-window.addBlogPost = (event) => {
-    if (event) event.preventDefault();
-    if (!Array.isArray(currentContent.blog)) currentContent.blog = [];
+window.addBlogPost = () => {
     currentContent.blog.push({ title: "New Post", summary: "Summary here...", content: "Full content here..." });
     renderBlog();
     updateDashboardStats();
@@ -602,7 +546,7 @@ window.addSocial = (event) => {
 };
 
 window.updateSocialName = (index, value) => {
-    currentContent.contact.socials[index].name = value;
+    contentData.contact.socials[index].name = value;
     updateDirtyState();
 };
 
@@ -613,6 +557,7 @@ window.deleteSocial = (index) => {
         updateDashboardStats();
         updateDirtyState();
     }
+    updateDirtyState();
 };
 
 window.removeItem = (event) => {
@@ -631,6 +576,7 @@ window.removeItem = (event) => {
     if (section === 'socials') {
         renderSocials();
         updateDashboardStats();
+        updateDirtyState();
     }
     updateDirtyState();
 };
@@ -666,7 +612,7 @@ window.showSection = (sectionId) => {
 
 window.saveContent = async () => {
     try {
-        currentContent = readFormState();
+        const currentContent = readFormState();
         const patch = diffContent(baselineContent, currentContent);
 
         logDebug('DEBUG admin content patch keys:', Object.keys(patch));
@@ -683,9 +629,8 @@ window.saveContent = async () => {
         });
 
         alert('Saved successfully!');
-        currentContent = deepClone(serverContent || {});
+        contentData = deepClone(serverContent || {});
         baselineContent = deepClone(serverContent || {});
-        populateForms();
         updateDirtyState();
     } catch (e) {
         console.error("Save error:", e);
@@ -749,7 +694,7 @@ window.addCustomSection = () => {
 };
 
 window.updateCustomSection = (index, key, value) => {
-    currentContent.customSections[index][key] = value;
+    contentData.customSections[index][key] = value;
     updateDirtyState();
 };
 
@@ -910,8 +855,4 @@ function stopLogPolling() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAdmin);
-} else {
-    initAdmin();
-}
+document.addEventListener('DOMContentLoaded', initAdmin);
