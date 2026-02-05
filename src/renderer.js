@@ -74,7 +74,7 @@ async function loadContent() {
               </div>
               <p style="margin: 1rem 0; color: #aaa; font-style: italic;">${project.description}</p>
               
-              <div style="margin: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+              <div class="project-details-grid">
                  ${featuresHtml}
                  ${roleHtml}
               </div>
@@ -259,19 +259,51 @@ async function loadContent() {
     // Mobile Menu Toggle
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
+    const mobileNavQuery = window.matchMedia('(max-width: 768px)');
+
+    const closeMenu = () => {
+        if (!hamburger || !navLinks) return;
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('active');
+        hamburger.setAttribute('aria-expanded', 'false');
+        hamburger.setAttribute('aria-label', 'Open navigation menu');
+        navLinks.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('nav-open');
+    };
+
+    const openMenu = () => {
+        if (!hamburger || !navLinks) return;
+        hamburger.classList.add('active');
+        navLinks.classList.add('active');
+        hamburger.setAttribute('aria-expanded', 'true');
+        hamburger.setAttribute('aria-label', 'Close navigation menu');
+        navLinks.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('nav-open');
+        const firstLink = navLinks.querySelector('a');
+        firstLink?.focus();
+    };
 
     if (hamburger && navLinks) {
+        navLinks.setAttribute('aria-hidden', mobileNavQuery.matches ? 'true' : 'false');
         hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            navLinks.classList.toggle('active');
+            if (navLinks.classList.contains('active')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
         });
 
         // Close menu when link is clicked
         document.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', () => {
-                hamburger.classList.remove('active');
-                navLinks.classList.remove('active');
+                closeMenu();
             });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && navLinks.classList.contains('active')) {
+                closeMenu();
+            }
         });
     }
 
