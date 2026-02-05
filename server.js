@@ -113,8 +113,6 @@ async function sendLoginEmail(toEmail, userName) {
 
 }
 
-const DATA_FILE = path.join(__dirname, 'content.json');
-
 // --- Routes ---
 
 // REGISTER API
@@ -165,16 +163,16 @@ app.post('/api/login', async (req, res) => {
 
         if (type === 'admin') {
             // ADMIN LOGIN
-            // 1. Verify Master Key (Site Password) from content.json
+            // 1. Verify Master Key (Site Password)
             let content;
             try {
-                content = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+                content = await db.getContent();
             } catch (e) {
-                console.error("CRITICAL: Failed to read content.json for Master Key check!");
+                console.error("CRITICAL: Failed to load content for Master Key check!", e);
                 return res.json({ success: false, error: 'Server Configuration Error' });
             }
 
-            const sitePass = (content.sitePassword || '').trim();
+            const sitePass = (content?.sitePassword || '').trim();
             const providedKey = (req.body.masterKey || '').trim();
 
             if (sitePass === '') {
@@ -410,44 +408,50 @@ app.post('/api/admin/users/update', async (req, res) => {
     }
 });
 
-app.get('/api/content', (req, res) => {
-    fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: 'Failed to read data' });
-
-        let content;
-        try {
-            content = JSON.parse(data);
-        } catch (parseError) {
-            console.error("Content Parse Error:", parseError);
-            return res.status(500).json({ error: 'Corrupted content data' });
-        }
+app.get('/api/content', async (req, res) => {
+    try {
+        let content = await db.getContent();
+        if (!content) content = {};
 
         // Track analytics (simplified: increment on data fetch)
         // We only increment if NOT logged in as admin to keep it clean
         if (req.signedCookies.admin_auth !== 'true') {
             if (!content.analytics) content.analytics = { totalViews: 0 };
             content.analytics.totalViews++;
-
-            // Save back immediately (async, don't wait for it)
-            fs.writeFile(DATA_FILE, JSON.stringify(content, null, 2), () => { });
+            await db.setContent(content);
         }
 
         res.json(content);
-    });
+    } catch (error) {
+        console.error("Content Fetch Error:", error);
+        res.status(500).json({ error: 'Failed to read data' });
+    }
 });
 
-app.post('/api/content', (req, res) => {
-    if (req.signedCookies.admin_auth !== 'true') return res.status(401).json({ error: 'Unauthorized' });
+async function handleContentUpdate(req, res) {
+    if (req.signedCookies.admin_auth !== 'true') {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
-    const newContent = req.body;
-    if (!newContent || typeof newContent !== 'object' || Array.isArray(newContent)) {
+    const updates = req.body;
+    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
         return res.status(400).json({ error: 'Invalid content payload' });
     }
-    fs.writeFile(DATA_FILE, JSON.stringify(newContent, null, 2), 'utf8', (err) => {
-        if (err) return res.status(500).json({ error: 'Failed to save data' });
-        res.json({ success: true, message: 'Content updated successfully' });
-    });
-});
+
+    try {
+        const existing = (await db.getContent()) || {};
+        const updatedContent = { ...existing, ...updates };
+        await db.setContent(updatedContent);
+        return res.json(updatedContent);
+    } catch (error) {
+        console.error("Content Update Error:", error);
+        return res.status(500).json({ error: 'Failed to save data' });
+    }
+}
+
+app.patch('/api/content', handleContentUpdate);
+
+app.post('/api/content', handleContentUpdate);
 
 app.use((req, res, next) => next(new AppError(`Not Found - ${req.originalUrl}`, 404)));
 
