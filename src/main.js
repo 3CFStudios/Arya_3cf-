@@ -42,13 +42,14 @@ cursorMoveHandler = function (e) {
   const posY = e.clientY;
 
   cursorDot.style.opacity = '1';
-  cursorDot.style.left = `${posX}px`;
-  cursorDot.style.top = `${posY}px`;
+  cursorDot.style.setProperty('--cursor-x', `${posX}px`);
+  cursorDot.style.setProperty('--cursor-y', `${posY}px`);
 
   cursorOutline.style.opacity = '1';
+  cursorOutline.style.setProperty('--cursor-x', `${posX}px`);
+  cursorOutline.style.setProperty('--cursor-y', `${posY}px`);
   cursorOutline.animate({
-    left: `${posX}px`,
-    top: `${posY}px`
+    transform: `translate3d(${posX}px, ${posY}px, 0) translate(-50%, -50%)`
   }, { duration: 500, fill: "forwards" });
 };
 
@@ -67,14 +68,14 @@ const addCursorListeners = () => {
       cursorOutline.style.height = '70px';
       cursorOutline.style.backgroundColor = 'rgba(0, 243, 255, 0.1)';
       cursorOutline.style.borderColor = 'var(--color-primary)';
-      cursorDot.style.transform = 'translate(-50%, -50%) scale(1.5)';
+      cursorDot.style.setProperty('--cursor-scale', '1.5');
     });
     el.addEventListener('mouseleave', () => {
       cursorOutline.style.width = '40px';
       cursorOutline.style.height = '40px';
       cursorOutline.style.backgroundColor = 'transparent';
       cursorOutline.style.borderColor = 'var(--color-primary)';
-      cursorDot.style.transform = 'translate(-50%, -50%) scale(1)';
+      cursorDot.style.setProperty('--cursor-scale', '1');
     });
   });
 };
@@ -119,20 +120,101 @@ let particles = [];
 const particleCount = 60; // Adjust for density
 const connectionDistance = 150;
 const mouseDistance = 200;
+let animationManager;
+
+class AnimationManager {
+  constructor({ fps = 60 } = {}) {
+    this.fps = fps;
+    this.frameDuration = 1000 / fps;
+    this.tasks = new Set();
+    this.lastTime = 0;
+    this.accumulator = 0;
+    this.rafId = null;
+    this.visibilityBound = false;
+    this.loop = this.loop.bind(this);
+    this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+  }
+
+  addTask(task) {
+    this.tasks.add(task);
+  }
+
+  removeTask(task) {
+    this.tasks.delete(task);
+  }
+
+  start() {
+    if (this.rafId) return;
+    this.lastTime = performance.now();
+    this.rafId = requestAnimationFrame(this.loop);
+    if (!this.visibilityBound) {
+      document.addEventListener('visibilitychange', this.handleVisibilityChange);
+      this.visibilityBound = true;
+    }
+  }
+
+  stop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.lastTime = 0;
+    this.accumulator = 0;
+  }
+
+  handleVisibilityChange() {
+    if (document.hidden) {
+      this.stop();
+    } else {
+      this.start();
+    }
+  }
+
+  loop(currentTime) {
+    if (!this.lastTime) {
+      this.lastTime = currentTime;
+    }
+    const deltaTime = currentTime - this.lastTime;
+    this.lastTime = currentTime;
+    this.accumulator += deltaTime;
+
+    const maxAccumulated = this.frameDuration * 5;
+    if (this.accumulator > maxAccumulated) {
+      this.accumulator = maxAccumulated;
+    }
+
+    if (this.accumulator >= this.frameDuration) {
+      const step = this.accumulator;
+      this.accumulator = 0;
+      this.tasks.forEach(task => task(step, currentTime));
+    }
+
+    this.rafId = requestAnimationFrame(this.loop);
+  }
+}
+
+const getPreferredFps = () => {
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+  const cpuCores = navigator.hardwareConcurrency || 4;
+  if (isSmallScreen || cpuCores < 4) {
+    return 60;
+  }
+  return 120;
+};
 
 class Particle {
   constructor() {
     this.x = Math.random() * width;
     this.y = Math.random() * height;
-    this.vx = (Math.random() - 0.5) * 0.5;
-    this.vy = (Math.random() - 0.5) * 0.5;
+    this.vx = (Math.random() - 0.5) * 0.03;
+    this.vy = (Math.random() - 0.5) * 0.03;
     this.size = Math.random() * 2;
     this.color = 'rgba(0, 243, 255, 0.5)'; // Cyan
   }
 
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
+  update(deltaTime) {
+    this.x += this.vx * deltaTime;
+    this.y += this.vy * deltaTime;
 
     if (this.x < 0 || this.x > width) this.vx *= -1;
     if (this.y < 0 || this.y > height) this.vy *= -1;
@@ -151,7 +233,11 @@ function initCanvas() {
   for (let i = 0; i < particleCount; i++) {
     particles.push(new Particle());
   }
-  animate();
+  if (!animationManager) {
+    animationManager = new AnimationManager({ fps: getPreferredFps() });
+  }
+  animationManager.addTask(animate);
+  animationManager.start();
 }
 
 function resizeCanvas() {
@@ -161,16 +247,24 @@ function resizeCanvas() {
   canvas.height = height;
 }
 
-function animate() {
+function updateAnimationFps() {
+  if (!animationManager) return;
+  const nextFps = getPreferredFps();
+  if (animationManager.fps !== nextFps) {
+    animationManager.fps = nextFps;
+    animationManager.frameDuration = 1000 / nextFps;
+  }
+}
+
+function animate(deltaTime) {
   ctx.clearRect(0, 0, width, height);
 
   particles.forEach(p => {
-    p.update();
+    p.update(deltaTime);
     p.draw();
   });
 
   drawConnections();
-  requestAnimationFrame(animate);
 }
 
 function drawConnections() {
@@ -194,6 +288,7 @@ function drawConnections() {
 
 window.addEventListener('resize', () => {
   resizeCanvas();
+  updateAnimationFps();
 });
 
 initCanvas();
