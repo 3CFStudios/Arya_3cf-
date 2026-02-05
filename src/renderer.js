@@ -265,6 +265,8 @@ async function loadContent() {
         if (!hamburger || !navLinks) return;
         hamburger.classList.remove('active');
         navLinks.classList.remove('active');
+        navLinks.style.visibility = 'hidden';
+        navLinks.style.pointerEvents = 'none';
         hamburger.setAttribute('aria-expanded', 'false');
         hamburger.setAttribute('aria-label', 'Open navigation menu');
         navLinks.setAttribute('aria-hidden', 'true');
@@ -275,6 +277,8 @@ async function loadContent() {
         if (!hamburger || !navLinks) return;
         hamburger.classList.add('active');
         navLinks.classList.add('active');
+        navLinks.style.visibility = 'visible';
+        navLinks.style.pointerEvents = 'auto';
         hamburger.setAttribute('aria-expanded', 'true');
         hamburger.setAttribute('aria-label', 'Close navigation menu');
         navLinks.setAttribute('aria-hidden', 'false');
