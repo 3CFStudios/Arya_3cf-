@@ -9,6 +9,8 @@
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/renderer.js"></script>
   <link rel="stylesheet" href="./src/style.css">
+  <link rel="stylesheet" href="./src/style-mobile.css" media="(max-width: 768px)">
+  <link rel="stylesheet" href="./src/style-desktop.css" media="(min-width: 769px)">
 </head>
 
 <body>
@@ -18,7 +20,7 @@
 
   <nav>
     <div class="logo">ARYA</div>
-    <ul class="nav-links">
+    <ul id="primary-navigation" class="nav-links" aria-hidden="true">
       <li><a href="#home">Home</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#projects">Projects</a></li>
@@ -36,11 +38,12 @@
         <button class="mobile-logout" type="button" role="menuitem">Logout</button>
       </div>
     </div>
-    <div class="hamburger">
+    <button class="hamburger" type="button" aria-label="Open navigation menu" aria-controls="primary-navigation"
+      aria-expanded="false">
       <span></span>
       <span></span>
       <span></span>
-    </div>
+    </button>
   </nav>
 
   <section id="home" class="hero">

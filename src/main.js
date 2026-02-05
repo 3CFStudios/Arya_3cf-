@@ -3,6 +3,11 @@
 // Custom Cursor Setup
 let cursorDot;
 let cursorOutline;
+let cursorMoveHandler;
+
+const hasTouchInput = () => {
+  return navigator.maxTouchPoints > 1 || window.matchMedia('(pointer: coarse)').matches;
+};
 
 const initCursor = () => {
   cursorDot = document.querySelector('.cursor-dot');
@@ -10,14 +15,25 @@ const initCursor = () => {
 
   if (!cursorDot || !cursorOutline) {
     document.body?.classList.remove('custom-cursor');
+    document.body?.classList.add('no-custom-cursor');
     console.warn("Custom cursor elements not found in DOM");
     return false;
   }
   document.body?.classList.add('custom-cursor');
+  document.body?.classList.remove('no-custom-cursor');
   return true;
 };
 
-window.addEventListener('mousemove', function (e) {
+const disableCustomCursor = () => {
+  document.body?.classList.remove('custom-cursor');
+  document.body?.classList.add('no-custom-cursor');
+  document.querySelectorAll('.cursor-dot, .cursor-outline').forEach((el) => el.remove());
+  if (cursorMoveHandler) {
+    window.removeEventListener('mousemove', cursorMoveHandler);
+  }
+};
+
+cursorMoveHandler = function (e) {
   if (!cursorDot || !cursorOutline) {
     if (!initCursor()) return;
   }
@@ -34,7 +50,7 @@ window.addEventListener('mousemove', function (e) {
     left: `${posX}px`,
     top: `${posY}px`
   }, { duration: 500, fill: "forwards" });
-});
+};
 
 // Interactive Cursor Effects
 const addCursorListeners = () => {
@@ -65,8 +81,14 @@ const addCursorListeners = () => {
 
 // Start initialization when DOM is ready
 const startCursorSystem = () => {
+  if (hasTouchInput()) {
+    disableCustomCursor();
+    return;
+  }
+
   if (initCursor()) {
     addCursorListeners();
+    window.addEventListener('mousemove', cursorMoveHandler);
 
     const observer_cursor = new MutationObserver(() => {
       addCursorListeners();
@@ -87,12 +109,6 @@ const addScrollListeners = () => {
     observer.observe(el);
   });
 };
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startCursorSystem);
-} else {
-  startCursorSystem();
-}
 
 // Canvas Background Animation
 const canvas = document.getElementById('bg-canvas');

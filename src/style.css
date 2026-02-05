@@ -36,6 +36,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body.no-custom-cursor,
+body.no-custom-cursor * {
+  cursor: auto !important;
+}
+
 /* Global cursor hide for custom cursor usage */
 body.custom-cursor,
 body.custom-cursor * {
@@ -169,6 +174,13 @@ h3 {
   gap: 3rem;
 }
 
+.project-details-grid {
+  margin: 1.5rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+}
+
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -284,6 +296,11 @@ nav {
   position: relative;
 }
 
+.nav-links a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 6px;
+}
+
 .nav-links a::after {
   content: '';
   position: absolute;
@@ -295,7 +312,8 @@ nav {
   transition: width var(--transition-fast);
 }
 
-.nav-links a:hover::after {
+.nav-links a:hover::after,
+.nav-links a:focus-visible::after {
   width: 100%;
 }
 
@@ -307,7 +325,8 @@ nav {
   transition: all 0.3s var(--transition-fast) !important;
 }
 
-.nav-login:hover {
+.nav-login:hover,
+.nav-login:focus-visible {
   background: rgba(0, 243, 255, 0.1);
   box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
   transform: translateY(-2px);
@@ -326,7 +345,8 @@ nav {
   transition: all 0.3s var(--transition-fast) !important;
 }
 
-.nav-logout:hover {
+.nav-logout:hover,
+.nav-logout:focus-visible {
   background: rgba(189, 0, 255, 0.1);
   box-shadow: 0 0 15px rgba(189, 0, 255, 0.2);
   transform: translateY(-2px);
@@ -448,6 +468,11 @@ section {
 .btn:hover {
   border-color: var(--color-primary);
   box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
 }
 
 .btn:hover::before {
@@ -610,98 +635,12 @@ ul li:nth-child(5) {
   pointer-events: all;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .about-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .experience-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .nav-links {
-    position: fixed;
-    right: -100%;
-    top: 0;
-    flex-direction: column;
-    background: rgba(5, 5, 5, 0.98);
-    backdrop-filter: blur(20px);
-    width: 280px;
-    height: 100vh;
-    text-align: left;
-    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 6rem 2rem 2rem;
-    z-index: 999;
-    border-left: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .nav-links.active {
-    right: 0;
-  }
-
-  .nav-links li {
-    margin: 1.2rem 0;
-  }
-
-  .nav-links a {
-    font-size: 1.1rem;
-  }
-
-  .nav-login {
-    display: inline-block;
-    margin-top: 1rem;
-    width: 100%;
-    text-align: center;
-  }
-
-  .nav-logout {
-    display: inline-block;
-    margin-top: 1rem;
-    width: 100%;
-    text-align: center;
-  }
-
-  .hero-title {
-    font-size: clamp(2.5rem, 15vw, 4rem);
-    /* Aggressive reduction for small mobile */
-    line-height: 1.2;
-    word-wrap: break-word;
-  }
-
-  .hamburger {
-    display: block;
-    cursor: pointer;
-  }
-
-  .mobile-account {
-    display: block;
-  }
-
-  .hamburger span {
-    display: block;
-    width: 25px;
-    height: 3px;
-    background: var(--color-primary);
-    margin: 5px auto;
-    transition: 0.3s;
-  }
-
-  .hamburger.active span:nth-child(1) {
-    transform: translateY(8px) rotate(45deg);
-  }
-
-  .hamburger.active span:nth-child(2) {
-    opacity: 0;
-  }
-
-  .hamburger.active span:nth-child(3) {
-    transform: translateY(-8px) rotate(-45deg);
-  }
-}
-
 .hamburger {
   display: none;
+  border: none;
+  background: transparent;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
 }
 
 .mobile-account {
@@ -763,7 +702,9 @@ ul li:nth-child(5) {
 }
 
 .mobile-account-menu a:hover,
-.mobile-account-menu button:hover {
+.mobile-account-menu button:hover,
+.mobile-account-menu a:focus-visible,
+.mobile-account-menu button:focus-visible {
   background: rgba(255, 255, 255, 0.08);
   color: var(--color-primary);
 }
@@ -780,7 +721,7 @@ ul li:nth-child(5) {
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
-  max-width: 800px;
+  max-width: 50rem;
   background: rgba(5, 5, 5, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -807,17 +748,4 @@ ul li:nth-child(5) {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.5;
-}
-
-@media (max-width: 768px) {
-  .cookie-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 1.5rem;
-  }
-
-  .cookie-banner {
-    width: calc(100% - 2rem);
-    padding: 1.5rem;
-  }
 }
