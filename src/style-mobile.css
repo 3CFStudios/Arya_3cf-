@@ -1,15 +1,11 @@
 /*
-  Mobile-first stylesheet for screens <= 768px.
-  Breakpoints: adjust 768px for tablets and 480px for small phones as needed.
+  Breakpoints expanded to 1024px with pointer media queries for touch devices, aligning with 320–480 (mobile),
+  481–768 (tablet), and 769–1024 (small desktop) responsive guidance.
 */
 
 body {
   font-size: 1rem;
   line-height: 1.7;
-}
-
-body.nav-open {
-  overflow: hidden;
 }
 
 section {
@@ -24,83 +20,6 @@ section {
 
 nav {
   padding: 0.75rem 1rem;
-}
-
-.nav-links {
-  position: fixed;
-  right: -100%;
-  top: 0;
-  flex-direction: column;
-  background: rgba(5, 5, 5, 0.98);
-  backdrop-filter: blur(20px);
-  width: min(80vw, 20rem);
-  height: 100vh;
-  text-align: left;
-  transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 6rem 2rem 2rem;
-  z-index: 999;
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
-  gap: 1.25rem;
-}
-
-.nav-links.active {
-  right: 0;
-}
-
-.nav-links li {
-  margin: 0;
-}
-
-.nav-links a {
-  font-size: 1.1rem;
-  min-height: 3rem;
-  display: flex;
-  align-items: center;
-}
-
-.nav-login,
-.nav-logout {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 3rem;
-  margin-top: 0.5rem;
-  width: 100%;
-  text-align: center;
-}
-
-.hamburger {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.35rem;
-  min-width: 3rem;
-  min-height: 3rem;
-  cursor: pointer;
-}
-
-.hamburger span {
-  display: block;
-  width: 1.75rem;
-  height: 0.2rem;
-  background: var(--color-primary);
-  transition: 0.3s;
-}
-
-.hamburger.active span:nth-child(1) {
-  transform: translateY(0.45rem) rotate(45deg);
-}
-
-.hamburger.active span:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger.active span:nth-child(3) {
-  transform: translateY(-0.45rem) rotate(-45deg);
-}
-
-.mobile-account {
-  display: block;
 }
 
 .hero {
@@ -123,18 +42,6 @@ nav {
 .hero-card {
   max-width: 100%;
   padding: 1.5rem;
-}
-
-.hero-actions {
-  flex-direction: column;
-  width: 100%;
-}
-
-.hero-actions .btn {
-  width: 100%;
-  text-align: center;
-  margin-top: 0.5rem;
-  min-height: 3rem;
 }
 
 .btn {
@@ -186,6 +93,242 @@ nav {
 .cookie-banner {
   width: calc(100% - 2rem);
   padding: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  body.nav-open {
+    overflow: hidden;
+  }
+
+  .nav-links {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    flex-direction: column;
+    background: rgba(5, 5, 5, 0.98);
+    backdrop-filter: blur(20px);
+    width: min(80vw, 20rem);
+    height: 100vh;
+    text-align: left;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6rem 2rem 2rem;
+    z-index: 999;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 1.25rem;
+  }
+
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-links li {
+    margin: 0;
+  }
+
+  .nav-links a {
+    font-size: 1.1rem;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-login,
+  .nav-logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    margin-top: 0.5rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .hamburger {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 3rem;
+    min-height: 3rem;
+    cursor: pointer;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 1.75rem;
+    height: 0.2rem;
+    background: var(--color-primary);
+    transition: 0.3s;
+  }
+
+  .hamburger.active span:nth-child(1) {
+    transform: translateY(0.45rem) rotate(45deg);
+  }
+
+  .hamburger.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .hamburger.active span:nth-child(3) {
+    transform: translateY(-0.45rem) rotate(-45deg);
+  }
+
+  .mobile-account {
+    display: block;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5rem;
+    min-height: 3rem;
+  }
+}
+
+@media (pointer: coarse) {
+  body.nav-open {
+    overflow: hidden;
+  }
+
+  .nav-links {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    flex-direction: column;
+    background: rgba(5, 5, 5, 0.98);
+    backdrop-filter: blur(20px);
+    width: min(80vw, 20rem);
+    height: 100vh;
+    text-align: left;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6rem 2rem 2rem;
+    z-index: 999;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 1.25rem;
+  }
+
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-links li {
+    margin: 0;
+  }
+
+  .nav-links a {
+    font-size: 1.1rem;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-login,
+  .nav-logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    margin-top: 0.5rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .hamburger {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 3rem;
+    min-height: 3rem;
+    cursor: pointer;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 1.75rem;
+    height: 0.2rem;
+    background: var(--color-primary);
+    transition: 0.3s;
+  }
+
+  .hamburger.active span:nth-child(1) {
+    transform: translateY(0.45rem) rotate(45deg);
+  }
+
+  .hamburger.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .hamburger.active span:nth-child(3) {
+    transform: translateY(-0.45rem) rotate(-45deg);
+  }
+
+  .mobile-account {
+    display: block;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5rem;
+    min-height: 3rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  body {
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+
+  section {
+    padding: 6rem 0;
+  }
+
+  .container {
+    padding: 0 2.5rem;
+  }
+
+  nav {
+    padding: 1rem 2rem;
+  }
+
+  .hero-content {
+    padding: 0 2.5rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2.8rem, 6vw, 4rem);
+  }
+
+  .glass-card {
+    padding: 2rem;
+  }
+
+  .projects-grid {
+    gap: 2.5rem;
+  }
+
+  .project-details-grid {
+    gap: 2rem;
+  }
+
+  .about-grid,
+  .experience-grid,
+  .skills-grid,
+  .blog-grid {
+    gap: 2rem;
+  }
 }
 
 @media (max-width: 480px) {
