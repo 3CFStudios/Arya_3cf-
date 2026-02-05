@@ -164,20 +164,15 @@ app.post('/api/login', async (req, res) => {
         if (type === 'admin') {
             // ADMIN LOGIN
             // 1. Verify Master Key (Site Password)
-            let content;
-            try {
-                content = await db.getContent();
-            } catch (e) {
-                console.error("CRITICAL: Failed to load content for Master Key check!", e);
-                return res.json({ success: false, error: 'Server Configuration Error' });
-            }
-
-            const sitePass = (content?.sitePassword || '').trim();
+            const sitePass = (process.env.SITE_MASTER_KEY || '').trim();
             const providedKey = (req.body.masterKey || '').trim();
 
             if (sitePass === '') {
-                console.log('❌ Admin Login Failed: Site Master Key not configured');
-                return res.json({ success: false, error: 'Site Master Key not configured' });
+                console.log('❌ Admin Login Failed: SITE_MASTER_KEY not configured');
+                return res.json({
+                    success: false,
+                    error: 'SITE_MASTER_KEY is not configured. Set SITE_MASTER_KEY in the environment to enable admin login.'
+                });
             }
 
             if (providedKey !== sitePass) {
@@ -187,13 +182,18 @@ app.post('/api/login', async (req, res) => {
             console.log('✅ Master Key Verified');
 
             // 2. Verify Credentials
-            const isHardcodedAdmin = (cleanEmail === 'www.vlarya.com@gmail.com' && cleanPass === 'Arya172010');
+            const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+            const envAdminPassword = (process.env.ADMIN_PASSWORD || '').trim();
+            const isEnvAdmin = envAdminEmail !== '' &&
+                envAdminPassword !== '' &&
+                cleanEmail === envAdminEmail &&
+                cleanPass === envAdminPassword;
             let isDbAdmin = false;
             if (user && user.isAdmin && user.password) {
                 isDbAdmin = await bcrypt.compare(cleanPass, user.password);
             }
 
-            if (isHardcodedAdmin || isDbAdmin) {
+            if (isEnvAdmin || isDbAdmin) {
                 console.log('✅ Admin Success');
                 res.cookie('admin_auth', 'true', { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
                 res.cookie('user_name', 'Admin', { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
