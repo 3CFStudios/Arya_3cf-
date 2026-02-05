@@ -53,14 +53,15 @@ body.custom-cursor * {
   position: fixed;
   top: 0;
   left: 0;
-  transform: translate(-50%, -50%);
+  transform: translate3d(var(--cursor-x, 0px), var(--cursor-y, 0px), 0) translate(-50%, -50%);
   border-radius: 50%;
   z-index: 2147483647;
   pointer-events: none;
   display: block;
   opacity: 1;
   /* Always visible if JS is running */
-  transition: width 0.2s, height 0.2s, background-color 0.2s, transform 0.2s;
+  transition: width 0.2s, height 0.2s, background-color 0.2s, transform 0.2s, opacity 0.2s;
+  will-change: transform, opacity;
 }
 
 .cursor-dot {
@@ -68,6 +69,8 @@ body.custom-cursor * {
   height: 8px;
   background-color: var(--color-primary);
   box-shadow: 0 0 10px var(--color-primary);
+  transform: translate3d(var(--cursor-x, 0px), var(--cursor-y, 0px), 0)
+    translate(-50%, -50%) scale(var(--cursor-scale, 1));
 }
 
 .cursor-outline {
@@ -75,6 +78,7 @@ body.custom-cursor * {
   height: 40px;
   border: 1px solid var(--color-primary);
   transition: width 0.2s, height 0.2s, background-color 0.2s;
+  transform: translate3d(var(--cursor-x, 0px), var(--cursor-y, 0px), 0) translate(-50%, -50%);
 }
 
 body:hover .cursor-outline {
