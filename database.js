@@ -1,9 +1,8 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import { defaultContent, normalizeContent } from './src/contentDefaults.js';
 
 let isConnected = false;
-
-/* -------------------- MODELS -------------------- */
 
 const UserSchema = new mongoose.Schema(
   {
@@ -14,101 +13,187 @@ const UserSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
   },
-  { collection: "users" }
+  { collection: 'users' }
 );
 
-const ContentSchema = new mongoose.Schema(
+const SiteContentSchema = new mongoose.Schema(
   {
-    key: { type: String, unique: true, index: true, required: true },
-    value: { type: mongoose.Schema.Types.Mixed, required: true }
+    status: { type: String, enum: ['draft', 'published'], required: true, index: true },
+    isActive: { type: Boolean, default: true, index: true },
+    version: { type: Number, required: true, index: true },
+    data: { type: mongoose.Schema.Types.Mixed, required: true },
+    publishedAt: { type: Date, default: null }
   },
-  { timestamps: true, collection: "content" }
+  { timestamps: true, collection: 'site_content_versions' }
 );
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-const Content = mongoose.models.Content || mongoose.model("Content", ContentSchema);
-
-/* -------------------- CONNECT -------------------- */
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
+const SiteContent = mongoose.models.SiteContent || mongoose.model('SiteContent', SiteContentSchema);
 
 async function connectDB() {
   if (isConnected) return;
 
-  const uri = process.env.MONGO_URI;
-  if (!uri) throw new Error("MONGO_URI missing (set it in Render env vars / .env)");
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (!uri) throw new Error('MONGODB_URI missing (set it in Render env vars / .env)');
 
-  mongoose.set("strictQuery", true);
-
-  try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 10000
-    });
-  } catch (error) {
-    const message = String(error?.message || "");
-    if (message.toLowerCase().includes("authentication failed") || message.toLowerCase().includes("bad auth")) {
-      throw new Error("Database authentication failed. Check MONGO_URI credentials.");
-    }
-    throw error;
-  }
+  mongoose.set('strictQuery', true);
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
 
   isConnected = true;
-  console.log("✅ MongoDB connected");
+  console.log('✅ MongoDB connected');
 
   await ensureAdmin();
   await ensureContentSeed();
 }
 
-/* -------------------- SEEDING -------------------- */
-
 async function ensureAdmin() {
-  const adminEmail = "www.vlarya.com@gmail.com";
-
-  // IMPORTANT: set ADMIN_PASSWORD in Render env vars
-  // Do NOT hardcode passwords in code.
+  const adminEmail = 'www.vlarya.com@gmail.com';
   const adminPlain = process.env.ADMIN_PASSWORD;
   if (!adminPlain) {
-    console.log("⚠️ ADMIN_PASSWORD not set. Admin seeding skipped.");
+    console.log('⚠️ ADMIN_PASSWORD not set. Admin seeding skipped.');
     return;
   }
 
   const existing = await User.findOne({ email: adminEmail }).lean();
-
   if (!existing) {
     const adminHash = await bcrypt.hash(adminPlain, 10);
     await User.create({
       email: adminEmail,
-      name: "Arya (Admin)",
+      name: 'Arya (Admin)',
       isAdmin: true,
       password: adminHash
     });
-    console.log("✅ Admin account initialized.");
-  } else {
-    // Repair if password missing / ensure admin flag
-    if (!existing.password || existing.isAdmin !== true) {
-      const adminHash = existing.password || (await bcrypt.hash(adminPlain, 10));
-      await User.updateOne(
-        { email: adminEmail },
-        { $set: { password: adminHash, isAdmin: true } }
-      );
-      console.log("✅ Admin account repaired.");
-    }
+    console.log('✅ Admin account initialized.');
+    return;
+  }
+
+  if (!existing.password || existing.isAdmin !== true) {
+    const adminHash = existing.password || (await bcrypt.hash(adminPlain, 10));
+    await User.updateOne({ email: adminEmail }, { $set: { password: adminHash, isAdmin: true } });
+    console.log('✅ Admin account repaired.');
   }
 }
 
 async function ensureContentSeed() {
-  const doc = await Content.findOne({ key: "site_content" }).lean();
-  if (!doc) {
-    await Content.create({
-      key: "site_content",
-      value: {
-        sitePassword: "",
-        analytics: { totalViews: 0 }
-      }
-    });
-    console.log("✅ Content initialized in Mongo.");
-  }
+  const activePublished = await SiteContent.findOne({ status: 'published', isActive: true }).lean();
+  const activeDraft = await SiteContent.findOne({ status: 'draft', isActive: true }).lean();
+  if (activePublished || activeDraft) return;
+
+  await SiteContent.create({
+    status: 'published',
+    isActive: true,
+    version: 1,
+    data: normalizeContent(defaultContent),
+    publishedAt: new Date()
+  });
+  await SiteContent.create({
+    status: 'draft',
+    isActive: true,
+    version: 1,
+    data: normalizeContent(defaultContent),
+    publishedAt: null
+  });
+  console.log('✅ Site content initialized in Mongo.');
 }
 
-/* -------------------- USERS API (same as your old one) -------------------- */
+async function getMaxVersion() {
+  await connectDB();
+  const max = await SiteContent.findOne({}).sort({ version: -1 }).lean();
+  return max?.version || 0;
+}
+
+export async function getActiveContent(status) {
+  await connectDB();
+  const doc = await SiteContent.findOne({ status, isActive: true }).sort({ updatedAt: -1 }).lean();
+  return doc || null;
+}
+
+export async function saveDraftContent(content) {
+  await connectDB();
+  const normalized = normalizeContent(content);
+  const existingDraft = await SiteContent.findOne({ status: 'draft', isActive: true });
+
+  if (existingDraft) {
+    existingDraft.data = normalized;
+    existingDraft.updatedAt = new Date();
+    await existingDraft.save();
+    return existingDraft.toObject();
+  }
+
+  const newVersion = (await getMaxVersion()) + 1;
+  return SiteContent.create({
+    status: 'draft',
+    isActive: true,
+    version: newVersion,
+    data: normalized,
+    publishedAt: null
+  });
+}
+
+export async function publishDraftContent() {
+  await connectDB();
+  const draft = await SiteContent.findOne({ status: 'draft', isActive: true });
+  if (!draft) throw new Error('No active draft found');
+
+  await SiteContent.updateMany({ status: 'published', isActive: true }, { $set: { isActive: false } });
+
+  const publishedVersion = (await getMaxVersion()) + 1;
+  const published = await SiteContent.create({
+    status: 'published',
+    isActive: true,
+    version: publishedVersion,
+    data: normalizeContent(draft.data),
+    publishedAt: new Date()
+  });
+
+  draft.version = publishedVersion;
+  draft.data = normalizeContent(draft.data);
+  await draft.save();
+
+  const oldPublished = await SiteContent.find({ status: 'published' }).sort({ updatedAt: -1 }).skip(10);
+  if (oldPublished.length) {
+    const ids = oldPublished.map((item) => item._id);
+    await SiteContent.deleteMany({ _id: { $in: ids }, isActive: false });
+  }
+
+  return published.toObject();
+}
+
+export async function getContentHistory() {
+  await connectDB();
+  return SiteContent.find({ status: 'published' }).sort({ version: -1 }).limit(10).lean();
+}
+
+export async function rollbackToVersion(version) {
+  await connectDB();
+  const target = await SiteContent.findOne({ status: 'published', version: Number(version) }).lean();
+  if (!target) throw new Error('Version not found');
+
+  return publishFromData(target.data);
+}
+
+async function publishFromData(data) {
+  await SiteContent.updateMany({ status: 'published', isActive: true }, { $set: { isActive: false } });
+  const nextVersion = (await getMaxVersion()) + 1;
+  return SiteContent.create({
+    status: 'published',
+    isActive: true,
+    version: nextVersion,
+    data: normalizeContent(data),
+    publishedAt: new Date()
+  });
+}
+
+// Legacy compatibility
+export async function getContent() {
+  const published = await getActiveContent('published');
+  return published?.data || normalizeContent(defaultContent);
+}
+
+export async function setContent(newContent) {
+  const saved = await saveDraftContent(newContent);
+  return saved.data;
+}
 
 export async function findUserByEmail(email) {
   await connectDB();
@@ -118,14 +203,7 @@ export async function findUserByEmail(email) {
 export async function createUser(profile) {
   await connectDB();
   const { name, email, password } = profile;
-
-  const created = await User.create({
-    email,
-    name,
-    password,
-    isAdmin: false
-  });
-
+  const created = await User.create({ email, name, password, isAdmin: false });
   return { id: created._id.toString(), email: created.email, name: created.name };
 }
 
@@ -136,11 +214,8 @@ export async function getUserById(id) {
 
 export async function getAllUsers() {
   await connectDB();
-
   const users = await User.find({}).sort({ createdAt: -1 }).lean();
-
-  // Map to your existing admin UI shape
-  return users.map(u => ({
+  return users.map((u) => ({
     id: u._id.toString(),
     email: u.email,
     name: u.name,
@@ -152,30 +227,8 @@ export async function getAllUsers() {
 
 export async function updateUser(id, updates) {
   await connectDB();
-
-  // Prevent id overwrite
   const { _id, id: ignoreId, ...safeUpdates } = updates;
-
   return User.updateOne({ _id: id }, { $set: safeUpdates });
 }
 
-/* -------------------- CONTENT API -------------------- */
-
-export async function getContent() {
-  await connectDB();
-  const doc = await Content.findOne({ key: "site_content" }).lean();
-  return doc?.value || null;
-}
-
-export async function setContent(newContent) {
-  await connectDB();
-  const updated = await Content.findOneAndUpdate(
-    { key: "site_content" },
-    { $set: { value: newContent } },
-    { upsert: true, new: true }
-  ).lean();
-  return updated?.value || newContent;
-}
-
-// Connect on load (keeps behavior similar to your SQLite init)
 connectDB().catch(console.error);

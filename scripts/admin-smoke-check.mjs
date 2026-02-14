@@ -4,11 +4,12 @@ const html = fs.readFileSync('admin/index.html', 'utf8');
 const js = fs.readFileSync('admin/admin.js', 'utf8');
 
 const checks = [
-  ['login form exists', html.includes('id="login-form"')],
-  ['tab buttons exist', html.includes('data-tab="overview"') && html.includes('data-tab="users"')],
-  ['logout button exists', html.includes('id="logout-btn"')],
-  ['DOMContentLoaded init exists', js.includes("document.addEventListener('DOMContentLoaded', init)")],
-  ['users refresh handler exists', js.includes("getElementById('refresh-users-btn')")],
+  ['connect button exists', html.includes('id="connect-btn"')],
+  ['save draft button exists', html.includes('id="save-draft-btn"')],
+  ['publish button exists', html.includes('id="publish-btn"')],
+  ['uses draft endpoint', js.includes("/api/site/draft")],
+  ['uses publish endpoint', js.includes("/api/site/publish")],
+  ['history endpoint wired', js.includes("/api/site/history")],
 ];
 
 const failed = checks.filter(([, ok]) => !ok);

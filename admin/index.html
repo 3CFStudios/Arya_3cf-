@@ -7,68 +7,53 @@
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-  <div class="admin-shell">
-    <section id="login-view" class="card">
-      <h1>Admin Login</h1>
-      <p class="muted">Sign in to access the admin panel.</p>
-      <form id="login-form" novalidate>
-        <label>Email
-          <input id="email" name="email" type="email" required />
-        </label>
-        <label>Password
-          <input id="password" name="password" type="password" required minlength="6" />
-        </label>
-        <label>Site Master Key
-          <input id="masterKey" name="masterKey" type="password" required />
-        </label>
-        <button id="login-btn" type="submit">Login</button>
-        <button id="demo-login-btn" type="button" class="secondary">Use demo mode</button>
-      </form>
-      <p id="login-message" class="status" role="status" aria-live="polite"></p>
+  <div class="container">
+    <header class="topbar">
+      <h1>Admin Panel</h1>
+      <div class="token-row">
+        <input id="admin-token" type="password" placeholder="ADMIN_TOKEN" />
+        <button id="connect-btn" type="button">Connect</button>
+        <button id="logout-btn" type="button">Logout</button>
+      </div>
+    </header>
+
+    <p id="status" class="status">Enter ADMIN_TOKEN to load draft.</p>
+
+    <nav class="tabs">
+      <button data-tab="overview" class="tab active" type="button">Overview</button>
+      <button data-tab="editor" class="tab" type="button">Editor</button>
+      <button data-tab="history" class="tab" type="button">History</button>
+    </nav>
+
+    <section id="panel-overview" class="panel active">
+      <h2>Overview</h2>
+      <p>These actions are connected to MongoDB-backed APIs.</p>
+      <div class="actions">
+        <button id="save-draft-btn" type="button">Save Draft</button>
+        <button id="preview-btn" type="button">Preview Draft</button>
+        <button id="publish-btn" type="button">Publish</button>
+      </div>
+      <div class="grid">
+        <label>Site title <input id="site-title" type="text" /></label>
+        <label>SEO description <input id="seo-description" type="text" /></label>
+        <label>Hero headline <input id="hero-headline" type="text" /></label>
+        <label>Hero subheadline <input id="hero-subheadline" type="text" /></label>
+        <label>Hero CTA text <input id="hero-cta-text" type="text" /></label>
+        <label>Hero CTA href <input id="hero-cta-href" type="text" /></label>
+        <label>Footer email <input id="footer-email" type="text" /></label>
+      </div>
     </section>
 
-    <section id="app-view" class="hidden">
-      <header class="topbar">
-        <h1>Admin</h1>
-        <button id="logout-btn" type="button">Logout</button>
-      </header>
+    <section id="panel-editor" class="panel" hidden>
+      <h2>Content JSON Editor</h2>
+      <textarea id="content-json" rows="20"></textarea>
+      <button id="apply-json-btn" type="button">Apply JSON to form</button>
+    </section>
 
-      <div class="layout">
-        <nav class="tabs" aria-label="Admin sections">
-          <button class="tab is-active" data-tab="overview" type="button">Overview</button>
-          <button class="tab" data-tab="users" type="button">Users</button>
-          <button class="tab" data-tab="settings" type="button">Settings</button>
-        </nav>
-
-        <main>
-          <section id="panel-overview" class="panel active" aria-labelledby="overview-tab">
-            <h2>Overview</h2>
-            <p>Admin UI is active and handlers are bound.</p>
-            <p id="overview-status" class="status">Ready.</p>
-          </section>
-
-          <section id="panel-users" class="panel" hidden>
-            <h2>Users</h2>
-            <button id="refresh-users-btn" type="button">Refresh users</button>
-            <ul id="users-list"></ul>
-            <p id="users-status" class="status"></p>
-          </section>
-
-          <section id="panel-settings" class="panel" hidden>
-            <h2>Settings</h2>
-            <form id="settings-form">
-              <label>Site Title
-                <input id="site-title" type="text" placeholder="Arya" />
-              </label>
-              <label>Maintenance Mode
-                <input id="maintenance" type="checkbox" />
-              </label>
-              <button id="save-settings-btn" type="submit">Save settings</button>
-            </form>
-            <p id="settings-status" class="status"></p>
-          </section>
-        </main>
-      </div>
+    <section id="panel-history" class="panel" hidden>
+      <h2>Publish History</h2>
+      <button id="refresh-history-btn" type="button">Refresh history</button>
+      <ul id="history-list"></ul>
     </section>
   </div>
 
