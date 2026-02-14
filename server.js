@@ -56,14 +56,10 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- Security: Protect Admin Routes ---
+// --- Security: Admin responses should never be cached ---
 app.use('/admin', (req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    if (req.signedCookies.admin_auth === 'true') {
-        next();
-    } else {
-        res.redirect('/login.html?tab=admin');
-    }
+    next();
 });
 
 // Serve frontend: if 'dist' exists, we are in production
@@ -243,6 +239,13 @@ app.post('/api/logout', (req, res) => {
     res.clearCookie('user_name');
     res.clearCookie('user_email');
     res.json({ success: true });
+});
+
+app.get('/api/admin/session', (req, res) => {
+    if (req.signedCookies.admin_auth !== 'true') {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    res.json({ success: true, role: 'admin' });
 });
 
 app.get('/api/auth-status', (req, res) => {
