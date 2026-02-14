@@ -1,60 +1,9 @@
-import { defaultContent, normalizeContent } from './contentDefaults.js';
 // Mobile navigation now targets large phones/tablets up to 1024px and touch devices for consistent layouts.
 // Fetch and populate content
 async function loadContent() {
     try {
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
-        const previewToken = params.get('token');
-
-        const endpoint = mode === 'draft' ? '/api/site/draft' : '/api/site/published';
-        const headers = {};
-        if (mode === 'draft' && previewToken) {
-            headers.Authorization = `Bearer ${previewToken}`;
-        }
-
-        const response = await fetch(endpoint, { headers });
-        const payload = await response.json();
-        const normalized = normalizeContent((payload && payload.data) ? payload.data : payload);
-
-        const data = {
-            ...normalized,
-            hero: {
-                titlePrefix: normalized.hero.headline,
-                titleSuffix: '',
-                subtitle: normalized.hero.subheadline,
-                description: normalized.hero.description,
-                focusList: normalized.hero.focusList,
-                ctaText: normalized.hero.ctaText,
-                ctaHref: normalized.hero.ctaHref
-            },
-            about: normalized.sections.about,
-            projects: normalized.sections.projects,
-            skills: normalized.sections.skills,
-            experience: normalized.sections.experience,
-            achievements: normalized.sections.achievements,
-            blog: normalized.sections.blog,
-            contact: {
-                title: "Let's Talk",
-                subtitle: normalized.site.seo.description,
-                email: normalized.footer.email,
-                socials: normalized.footer.socials
-            },
-            footer: normalized.footer,
-            nav: normalized.nav,
-            site: normalized.site
-        };
-
-        document.title = data.site?.title || document.title;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute('content', data.site?.seo?.description || '');
-
-        const navList = document.querySelector('#primary-navigation');
-        if (navList && Array.isArray(data.nav) && data.nav.length) {
-            const authItems = Array.from(navList.querySelectorAll('.nav-login, .nav-logout')).map((el) => el.closest('li')).filter(Boolean);
-            navList.innerHTML = data.nav.map((item) => `<li><a href="${item.href}">${item.label}</a></li>`).join('');
-            authItems.forEach((item) => navList.appendChild(item));
-        }
+        const response = await fetch('/api/content');
+        const data = await response.json();
 
         // Hero
         const heroTitle = document.querySelector('.hero-title');
@@ -73,6 +22,19 @@ async function loadContent() {
         document.querySelector('#hero-desc').innerText = data.hero.description;
 
         const focusList = document.querySelector('#hero-focus-list');
+
+        const heroActions = document.querySelector('.hero-actions');
+        if (heroActions && Array.isArray(data.hero.buttons) && data.hero.buttons.length) {
+            heroActions.innerHTML = data.hero.buttons.map((btn) => `
+                <a href="${btn.link || '#'}" class="action-card">
+                  <span class="action-accent"></span>
+                  <span class="action-content">
+                    <span class="action-title">${btn.text || 'Learn More'}</span>
+                    <span class="action-subtitle">Quick action</span>
+                  </span>
+                </a>`).join('');
+        }
+
         focusList.innerHTML = '';
         data.hero.focusList.forEach(item => {
             focusList.innerHTML += `<li style="margin-bottom: 0.5rem;">➢ ${item}</li>`;
@@ -308,10 +270,7 @@ async function loadContent() {
 
     } catch (error) {
         console.error('Error loading content:', error);
-        const normalized = normalizeContent(defaultContent);
-        document.title = normalized.site.title;
-        const heroTitle = document.querySelector('.hero-title');
-        if (heroTitle) heroTitle.innerText = normalized.hero.headline;
+        console.warn('Falling back to static markup content due to API failure.');
     }
 
     // Mobile Menu Toggle

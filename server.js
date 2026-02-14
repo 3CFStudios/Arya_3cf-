@@ -12,8 +12,6 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import AppError from './utils/AppError.js';
 import { sendMail } from './services/mailer.js';
-import { z } from 'zod';
-import { defaultContent, normalizeContent } from './src/contentDefaults.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,74 +41,6 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'arya-secret-key-172010';
 let server;
 
 
-const contentSchema = z.object({
-    site: z.object({
-        title: z.string().min(1).default(defaultContent.site.title),
-        seo: z.object({
-            description: z.string().default(''),
-            keywords: z.array(z.string()).default([]),
-            ogImage: z.string().default('')
-        }).default(defaultContent.site.seo)
-    }).default(defaultContent.site),
-    nav: z.array(z.object({ label: z.string(), href: z.string() })).default(defaultContent.nav),
-    hero: z.object({
-        headline: z.string().default(defaultContent.hero.headline),
-        subheadline: z.string().default(defaultContent.hero.subheadline),
-        description: z.string().default(defaultContent.hero.description),
-        ctaText: z.string().default(defaultContent.hero.ctaText),
-        ctaHref: z.string().default(defaultContent.hero.ctaHref),
-        image: z.string().default(''),
-        focusList: z.array(z.string()).default(defaultContent.hero.focusList)
-    }).default(defaultContent.hero),
-    sections: z.object({
-        about: z.object({
-            title: z.string().default(defaultContent.sections.about.title),
-            p1: z.string().default(''),
-            p2: z.string().default(''),
-            enjoyList: z.array(z.string()).default([]),
-            apartList: z.array(z.string()).default([])
-        }).default(defaultContent.sections.about),
-        projects: z.array(z.any()).default([]),
-        skills: z.array(z.any()).default([]),
-        experience: z.array(z.any()).default([]),
-        achievements: z.array(z.any()).default([]),
-        blog: z.array(z.any()).default([])
-    }).default(defaultContent.sections),
-    footer: z.object({
-        email: z.string().default(defaultContent.footer.email),
-        phone: z.string().default(''),
-        address: z.string().default(''),
-        copyright: z.string().default(defaultContent.footer.copyright),
-        socials: z.array(z.object({ name: z.string(), link: z.string() })).default(defaultContent.footer.socials)
-    }).default(defaultContent.footer),
-    theme: z.object({
-        primary: z.string().default(defaultContent.theme.primary),
-        secondary: z.string().default(defaultContent.theme.secondary),
-        bg: z.string().default(defaultContent.theme.bg)
-    }).default(defaultContent.theme),
-    analytics: z.object({ totalViews: z.number().int().nonnegative().default(0) }).default(defaultContent.analytics)
-}).passthrough();
-
-function requireAdminToken(req, res, next) {
-    const authHeader = req.headers.authorization || '';
-    const expectedToken = process.env.ADMIN_TOKEN;
-
-    if (!expectedToken) {
-        return res.status(500).json({ success: false, error: 'ADMIN_TOKEN is not configured' });
-    }
-
-    if (!authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, error: 'Missing Bearer token' });
-    }
-
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (token !== expectedToken) {
-        return res.status(401).json({ success: false, error: 'Invalid token' });
-    }
-
-    next();
-}
-
 // --- Middleware ---
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -134,10 +64,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- Security: Admin responses should never be cached ---
+// --- Security: Protect Admin Routes ---
 app.use('/admin', (req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    next();
+    if (req.signedCookies.admin_auth === 'true') {
+        next();
+    } else {
+        res.redirect('/login.html?tab=admin');
+    }
 });
 
 // Serve frontend: if 'dist' exists, we are in production
@@ -489,97 +423,62 @@ app.post('/api/admin/users/update', async (req, res) => {
     }
 });
 
-app.get('/api/site/published', async (req, res) => {
-    try {
-        const published = await db.getActiveContent('published');
-        const data = normalizeContent(published?.data || defaultContent);
-
-        if (req.signedCookies.admin_auth !== 'true') {
-            data.analytics = data.analytics || { totalViews: 0 };
-            data.analytics.totalViews += 1;
-            await db.saveDraftContent(data);
-        }
-
-        res.json({ success: true, version: published?.version || 1, data });
-    } catch (error) {
-        console.error('Published content fetch error:', error);
-        res.status(500).json({ success: false, error: 'Failed to load published content' });
-    }
-});
-
-app.get('/api/site/draft', requireAdminToken, async (req, res) => {
-    try {
-        let draft = await db.getActiveContent('draft');
-        if (!draft) {
-            const published = await db.getActiveContent('published');
-            draft = await db.saveDraftContent(published?.data || defaultContent);
-        }
-        res.json({ success: true, version: draft.version, data: normalizeContent(draft.data) });
-    } catch (error) {
-        console.error('Draft content fetch error:', error);
-        res.status(500).json({ success: false, error: 'Failed to load draft content' });
-    }
-});
-
-app.put('/api/site/draft', requireAdminToken, async (req, res) => {
-    const parsed = contentSchema.safeParse(req.body || {});
-    if (!parsed.success) {
-        return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    }
-
-    try {
-        const saved = await db.saveDraftContent(parsed.data);
-        res.json({ success: true, version: saved.version, data: normalizeContent(saved.data) });
-    } catch (error) {
-        console.error('Draft save error:', error);
-        res.status(500).json({ success: false, error: 'Failed to save draft' });
-    }
-});
-
-app.post('/api/site/publish', requireAdminToken, async (req, res) => {
-    try {
-        const published = await db.publishDraftContent();
-        res.json({ success: true, version: published.version, data: normalizeContent(published.data) });
-    } catch (error) {
-        console.error('Publish error:', error);
-        res.status(500).json({ success: false, error: error.message || 'Failed to publish draft' });
-    }
-});
-
-app.get('/api/site/history', requireAdminToken, async (req, res) => {
-    try {
-        const history = await db.getContentHistory();
-        res.json({ success: true, history: history.map((item) => ({
-            version: item.version,
-            status: item.status,
-            updatedAt: item.updatedAt,
-            publishedAt: item.publishedAt
-        })) });
-    } catch (error) {
-        console.error('History fetch error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch history' });
-    }
-});
-
-app.post('/api/site/rollback/:ver', requireAdminToken, async (req, res) => {
-    try {
-        const published = await db.rollbackToVersion(Number(req.params.ver));
-        res.json({ success: true, version: published.version, data: normalizeContent(published.data) });
-    } catch (error) {
-        console.error('Rollback error:', error);
-        res.status(500).json({ success: false, error: error.message || 'Failed to rollback' });
-    }
-});
-
-// Backward compatible content endpoint for current frontend callers
 app.get('/api/content', async (req, res) => {
     try {
-        const published = await db.getActiveContent('published');
-        res.json(normalizeContent(published?.data || defaultContent));
+        let content = await db.getContent();
+        if (!content) content = {};
+
+        console.log('[content] loaded from mongo');
+
+        if (req.signedCookies.admin_auth !== 'true') {
+            if (!content.analytics) content.analytics = { totalViews: 0 };
+            content.analytics.totalViews++;
+            await db.setContent(content);
+        }
+
+        res.json(content);
     } catch (error) {
+        console.error('Content Fetch Error:', error);
         res.status(500).json({ error: 'Failed to read data' });
     }
 });
+
+function deepMerge(existing, incoming) {
+    if (incoming === undefined) return existing;
+    if (Array.isArray(incoming)) return incoming;
+    if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+        const result = { ...(existing && typeof existing === 'object' ? existing : {}) };
+        Object.keys(incoming).forEach((key) => {
+            result[key] = deepMerge(result[key], incoming[key]);
+        });
+        return result;
+    }
+    return incoming;
+}
+
+async function handleContentUpdate(req, res) {
+    if (req.signedCookies.admin_auth !== 'true') {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const incoming = req.body;
+    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+        return res.status(400).json({ error: 'Invalid content payload' });
+    }
+
+    try {
+        const existing = (await db.getContent()) || {};
+        const merged = deepMerge(existing, incoming);
+        const saved = await db.setContent(merged);
+        return res.json(saved);
+    } catch (error) {
+        console.error('Content Update Error:', error);
+        return res.status(500).json({ error: 'Failed to save data' });
+    }
+}
+
+app.patch('/api/content', handleContentUpdate);
+app.post('/api/content', handleContentUpdate);
 
 app.use((req, res, next) => next(new AppError(`Not Found - ${req.originalUrl}`, 404)));
 

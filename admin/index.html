@@ -3,58 +3,138 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arya Admin</title>
+  <title>Arya Admin CMS</title>
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-  <div class="container">
-    <header class="topbar">
-      <h1>Admin Panel</h1>
-      <div class="token-row">
-        <input id="admin-token" type="password" placeholder="ADMIN_TOKEN" />
-        <button id="connect-btn" type="button">Connect</button>
-        <button id="logout-btn" type="button">Logout</button>
-      </div>
-    </header>
+  <header class="save-bar">
+    <strong>Arya CMS</strong>
+    <span id="save-status" class="status-pill">Loading…</span>
+    <div class="save-actions">
+      <button id="save-btn" type="button">Save Changes</button>
+      <button id="reset-btn" type="button" class="secondary">Reset Unsaved Changes</button>
+      <button id="refresh-preview-btn" type="button" class="secondary">Refresh Preview</button>
+      <button id="logout-btn" type="button" class="secondary">Logout</button>
+    </div>
+  </header>
 
-    <p id="status" class="status">Enter ADMIN_TOKEN to load draft.</p>
+  <div id="toast" class="toast" hidden></div>
 
-    <nav class="tabs">
-      <button data-tab="overview" class="tab active" type="button">Overview</button>
-      <button data-tab="editor" class="tab" type="button">Editor</button>
-      <button data-tab="history" class="tab" type="button">History</button>
-    </nav>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <button class="nav-btn active" data-target="overview">Overview</button>
+      <button class="nav-btn" data-target="hero">Hero</button>
+      <button class="nav-btn" data-target="about">About</button>
+      <button class="nav-btn" data-target="projects">Projects</button>
+      <button class="nav-btn" data-target="skills">Skills</button>
+      <button class="nav-btn" data-target="experience">Experience</button>
+      <button class="nav-btn" data-target="achievements">Achievements</button>
+      <button class="nav-btn" data-target="blog">Blog</button>
+      <button class="nav-btn" data-target="contact">Contact</button>
+      <button class="nav-btn" data-target="customSections">Custom Sections</button>
+      <button class="nav-btn" data-target="layout">Page Layout</button>
+      <button class="nav-btn" data-target="theme">Theme</button>
+    </aside>
 
-    <section id="panel-overview" class="panel active">
-      <h2>Overview</h2>
-      <p>These actions are connected to MongoDB-backed APIs.</p>
-      <div class="actions">
-        <button id="save-draft-btn" type="button">Save Draft</button>
-        <button id="preview-btn" type="button">Preview Draft</button>
-        <button id="publish-btn" type="button">Publish</button>
-      </div>
-      <div class="grid">
-        <label>Site title <input id="site-title" type="text" /></label>
-        <label>SEO description <input id="seo-description" type="text" /></label>
-        <label>Hero headline <input id="hero-headline" type="text" /></label>
-        <label>Hero subheadline <input id="hero-subheadline" type="text" /></label>
-        <label>Hero CTA text <input id="hero-cta-text" type="text" /></label>
-        <label>Hero CTA href <input id="hero-cta-href" type="text" /></label>
-        <label>Footer email <input id="footer-email" type="text" /></label>
-      </div>
-    </section>
+    <main class="editor">
+      <section id="panel-overview" class="panel active">
+        <h2>Overview</h2>
+        <p>Edit content and click <b>Save Changes</b>. The preview iframe refreshes after save.</p>
+      </section>
 
-    <section id="panel-editor" class="panel" hidden>
-      <h2>Content JSON Editor</h2>
-      <textarea id="content-json" rows="20"></textarea>
-      <button id="apply-json-btn" type="button">Apply JSON to form</button>
-    </section>
+      <section id="panel-hero" class="panel">
+        <h2>Hero</h2>
+        <div class="grid-2">
+          <label>Title Prefix<input id="hero-titlePrefix" type="text" /></label>
+          <label>Title Suffix<input id="hero-titleSuffix" type="text" /></label>
+          <label>Subtitle<input id="hero-subtitle" type="text" /></label>
+          <label>Description<textarea id="hero-description"></textarea></label>
+        </div>
+        <h3>Focus List</h3>
+        <div id="hero-focus-list-editor"></div>
+        <button type="button" id="add-focus-btn">Add Focus Item</button>
 
-    <section id="panel-history" class="panel" hidden>
-      <h2>Publish History</h2>
-      <button id="refresh-history-btn" type="button">Refresh history</button>
-      <ul id="history-list"></ul>
-    </section>
+        <h3>Hero Buttons</h3>
+        <div id="hero-buttons-editor"></div>
+        <button type="button" id="add-hero-button-btn">Add Hero Button</button>
+      </section>
+
+      <section id="panel-about" class="panel">
+        <h2>About</h2>
+        <label>Paragraph 1<textarea id="about-p1"></textarea></label>
+        <label>Paragraph 2<textarea id="about-p2"></textarea></label>
+        <label>Enjoy List (one per line)<textarea id="about-enjoyList"></textarea></label>
+        <label>Apart List (one per line)<textarea id="about-apartList"></textarea></label>
+      </section>
+
+      <section id="panel-projects" class="panel">
+        <h2>Projects</h2>
+        <div id="projects-editor"></div>
+        <button type="button" id="add-project-btn">Add Project</button>
+      </section>
+
+      <section id="panel-skills" class="panel">
+        <h2>Skills</h2>
+        <div id="skills-editor"></div>
+        <button type="button" id="add-skill-btn">Add Skill Category</button>
+      </section>
+
+      <section id="panel-experience" class="panel">
+        <h2>Experience</h2>
+        <div id="experience-editor"></div>
+        <button type="button" id="add-experience-btn">Add Experience Entry</button>
+      </section>
+
+      <section id="panel-achievements" class="panel">
+        <h2>Achievements</h2>
+        <div id="achievements-editor"></div>
+        <button type="button" id="add-achievement-btn">Add Achievement</button>
+      </section>
+
+      <section id="panel-blog" class="panel">
+        <h2>Blog</h2>
+        <div id="blog-editor"></div>
+        <button type="button" id="add-blog-btn">Add Blog Post</button>
+      </section>
+
+      <section id="panel-contact" class="panel">
+        <h2>Contact</h2>
+        <div class="grid-2">
+          <label>Title<input id="contact-title" type="text" /></label>
+          <label>Subtitle<input id="contact-subtitle" type="text" /></label>
+          <label>Email<input id="contact-email" type="email" /></label>
+          <label>Phone<input id="contact-phone" type="text" /></label>
+        </div>
+        <h3>Social Links</h3>
+        <div id="socials-editor"></div>
+        <button type="button" id="add-social-btn">Add Social Link</button>
+      </section>
+
+      <section id="panel-customSections" class="panel">
+        <h2>Custom Sections</h2>
+        <div id="custom-sections-editor"></div>
+        <button type="button" id="add-custom-section-btn">Add Custom Section</button>
+      </section>
+
+      <section id="panel-layout" class="panel">
+        <h2>Page Layout (sectionOrder)</h2>
+        <div id="layout-editor"></div>
+      </section>
+
+      <section id="panel-theme" class="panel">
+        <h2>Theme</h2>
+        <div class="grid-2">
+          <label>Primary<input id="theme-primary" type="color" /></label>
+          <label>Secondary<input id="theme-secondary" type="color" /></label>
+          <label>Background<input id="theme-bg" type="color" /></label>
+        </div>
+      </section>
+    </main>
+
+    <aside class="preview-pane">
+      <h3>Live Preview</h3>
+      <iframe id="preview-frame" src="/" title="Site preview"></iframe>
+    </aside>
   </div>
 
   <script type="module" src="/admin/admin.js"></script>
