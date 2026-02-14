@@ -40,10 +40,18 @@ const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'arya-secret-key-172010';
 let server;
 
+
 // --- Middleware ---
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',').map((o) => o.trim()).filter(Boolean);
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
 app.use(bodyParser.json());
 app.use(cookieParser(SESSION_SECRET));
 
@@ -245,6 +253,13 @@ app.post('/api/logout', (req, res) => {
     res.json({ success: true });
 });
 
+app.get('/api/admin/session', (req, res) => {
+    if (req.signedCookies.admin_auth !== 'true') {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    res.json({ success: true, role: 'admin' });
+});
+
 app.get('/api/auth-status', (req, res) => {
     const isAdmin = req.signedCookies.admin_auth === 'true';
     const userName = req.signedCookies.user_name || null;
@@ -415,8 +430,6 @@ app.get('/api/content', async (req, res) => {
 
         console.log('[content] loaded from mongo');
 
-        // Track analytics (simplified: increment on data fetch)
-        // We only increment if NOT logged in as admin to keep it clean
         if (req.signedCookies.admin_auth !== 'true') {
             if (!content.analytics) content.analytics = { totalViews: 0 };
             content.analytics.totalViews++;
@@ -425,7 +438,7 @@ app.get('/api/content', async (req, res) => {
 
         res.json(content);
     } catch (error) {
-        console.error("Content Fetch Error:", error);
+        console.error('Content Fetch Error:', error);
         res.status(500).json({ error: 'Failed to read data' });
     }
 });
@@ -454,20 +467,17 @@ async function handleContentUpdate(req, res) {
     }
 
     try {
-        console.log('[content] incoming keys', Object.keys(incoming));
         const existing = (await db.getContent()) || {};
         const merged = deepMerge(existing, incoming);
-        console.log('[content] saving to mongo');
         const saved = await db.setContent(merged);
         return res.json(saved);
     } catch (error) {
-        console.error("Content Update Error:", error);
+        console.error('Content Update Error:', error);
         return res.status(500).json({ error: 'Failed to save data' });
     }
 }
 
 app.patch('/api/content', handleContentUpdate);
-
 app.post('/api/content', handleContentUpdate);
 
 app.use((req, res, next) => next(new AppError(`Not Found - ${req.originalUrl}`, 404)));

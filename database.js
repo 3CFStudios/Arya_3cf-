@@ -3,8 +3,6 @@ import bcrypt from "bcryptjs";
 
 let isConnected = false;
 
-/* -------------------- MODELS -------------------- */
-
 const UserSchema = new mongoose.Schema(
   {
     email: { type: String, unique: true, index: true, required: true },
@@ -28,27 +26,14 @@ const ContentSchema = new mongoose.Schema(
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const Content = mongoose.models.Content || mongoose.model("Content", ContentSchema);
 
-/* -------------------- CONNECT -------------------- */
-
 async function connectDB() {
   if (isConnected) return;
 
-  const uri = process.env.MONGO_URI;
-  if (!uri) throw new Error("MONGO_URI missing (set it in Render env vars / .env)");
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (!uri) throw new Error("MONGODB_URI missing (set it in Render env vars / .env)");
 
   mongoose.set("strictQuery", true);
-
-  try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 10000
-    });
-  } catch (error) {
-    const message = String(error?.message || "");
-    if (message.toLowerCase().includes("authentication failed") || message.toLowerCase().includes("bad auth")) {
-      throw new Error("Database authentication failed. Check MONGO_URI credentials.");
-    }
-    throw error;
-  }
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
 
   isConnected = true;
   console.log("✅ MongoDB connected");
@@ -57,13 +42,8 @@ async function connectDB() {
   await ensureContentSeed();
 }
 
-/* -------------------- SEEDING -------------------- */
-
 async function ensureAdmin() {
   const adminEmail = "www.vlarya.com@gmail.com";
-
-  // IMPORTANT: set ADMIN_PASSWORD in Render env vars
-  // Do NOT hardcode passwords in code.
   const adminPlain = process.env.ADMIN_PASSWORD;
   if (!adminPlain) {
     console.log("⚠️ ADMIN_PASSWORD not set. Admin seeding skipped.");
@@ -81,16 +61,13 @@ async function ensureAdmin() {
       password: adminHash
     });
     console.log("✅ Admin account initialized.");
-  } else {
-    // Repair if password missing / ensure admin flag
-    if (!existing.password || existing.isAdmin !== true) {
-      const adminHash = existing.password || (await bcrypt.hash(adminPlain, 10));
-      await User.updateOne(
-        { email: adminEmail },
-        { $set: { password: adminHash, isAdmin: true } }
-      );
-      console.log("✅ Admin account repaired.");
-    }
+  } else if (!existing.password || existing.isAdmin !== true) {
+    const adminHash = existing.password || (await bcrypt.hash(adminPlain, 10));
+    await User.updateOne(
+      { email: adminEmail },
+      { $set: { password: adminHash, isAdmin: true } }
+    );
+    console.log("✅ Admin account repaired.");
   }
 }
 
@@ -100,15 +77,34 @@ async function ensureContentSeed() {
     await Content.create({
       key: "site_content",
       value: {
-        sitePassword: "",
-        analytics: { totalViews: 0 }
+        hero: {
+          titlePrefix: "Hi, I'm Arya ",
+          titleSuffix: "",
+          subtitle: "Builder. Tech nerd. Systems enjoyer.",
+          description: "I design and build high performance software systems, games, AI powered tools, and experimental tech projects.",
+          focusList: ["Game engines", "AI-driven tools", "Software architecture"],
+          buttons: [
+            { text: "View Projects", link: "#projects" },
+            { text: "Contact Me", link: "#contact" }
+          ]
+        },
+        about: { title: "About Me", p1: "", p2: "", enjoyList: [], apartList: [] },
+        projects: [],
+        skills: [],
+        experience: [],
+        achievements: [],
+        blog: [],
+        contact: { title: "Let's Talk", subtitle: "", email: "", phone: "", socials: [] },
+        customSections: [],
+        sectionOrder: ["home", "about", "projects", "skills", "experience", "blog", "contact"],
+        theme: { primary: "#00f3ff", secondary: "#bd00ff", bg: "#050505" },
+        analytics: { totalViews: 0 },
+        sitePassword: ""
       }
     });
     console.log("✅ Content initialized in Mongo.");
   }
 }
-
-/* -------------------- USERS API (same as your old one) -------------------- */
 
 export async function findUserByEmail(email) {
   await connectDB();
@@ -119,12 +115,7 @@ export async function createUser(profile) {
   await connectDB();
   const { name, email, password } = profile;
 
-  const created = await User.create({
-    email,
-    name,
-    password,
-    isAdmin: false
-  });
+  const created = await User.create({ email, name, password, isAdmin: false });
 
   return { id: created._id.toString(), email: created.email, name: created.name };
 }
@@ -138,9 +129,7 @@ export async function getAllUsers() {
   await connectDB();
 
   const users = await User.find({}).sort({ createdAt: -1 }).lean();
-
-  // Map to your existing admin UI shape
-  return users.map(u => ({
+  return users.map((u) => ({
     id: u._id.toString(),
     email: u.email,
     name: u.name,
@@ -152,14 +141,9 @@ export async function getAllUsers() {
 
 export async function updateUser(id, updates) {
   await connectDB();
-
-  // Prevent id overwrite
   const { _id, id: ignoreId, ...safeUpdates } = updates;
-
   return User.updateOne({ _id: id }, { $set: safeUpdates });
 }
-
-/* -------------------- CONTENT API -------------------- */
 
 export async function getContent() {
   await connectDB();
@@ -177,5 +161,4 @@ export async function setContent(newContent) {
   return updated?.value || newContent;
 }
 
-// Connect on load (keeps behavior similar to your SQLite init)
 connectDB().catch(console.error);

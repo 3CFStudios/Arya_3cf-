@@ -3,332 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arya Admin | Dashboard</title>
-  <link rel="stylesheet" href="../src/style.css" />
+  <title>Arya Admin CMS</title>
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
-<body class="admin-page custom-cursor">
-  <div class="cursor-dot"></div>
-  <div class="cursor-outline"></div>
-
-  <aside>
-    <div class="logo-section">
-      <div class="logo-icon">⚡</div>
-      <h2>ARYA CMS</h2>
+<body>
+  <header class="save-bar">
+    <strong>Arya CMS</strong>
+    <span id="save-status" class="status-pill">Loading…</span>
+    <div class="save-actions">
+      <button id="save-btn" type="button">Save Changes</button>
+      <button id="reset-btn" type="button" class="secondary">Reset Unsaved Changes</button>
+      <button id="refresh-preview-btn" type="button" class="secondary">Refresh Preview</button>
+      <button id="logout-btn" type="button" class="secondary">Logout</button>
     </div>
+  </header>
 
-    <div class="nav-section">Overview</div>
-    <button onclick="showSection('dashboard')" class="active">📊 Dashboard</button>
+  <div id="toast" class="toast" hidden></div>
 
-    <div class="nav-section">Content</div>
-    <button onclick="showSection('hero')">🏠 Hero</button>
-    <button onclick="showSection('about')">👤 About</button>
-    <button onclick="showSection('projects')">🚀 Projects</button>
-    <button onclick="showSection('skills')">🛠️ Skills</button>
-    <button onclick="showSection('experience')">💼 Experience</button>
-    <button onclick="showSection('achievements')">🏆 Achievements</button>
-    <button onclick="showSection('blog')">📝 Blog</button>
-    <button onclick="showSection('contact')">📬 Contact</button>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <button class="nav-btn active" data-target="overview">Overview</button>
+      <button class="nav-btn" data-target="hero">Hero</button>
+      <button class="nav-btn" data-target="about">About</button>
+      <button class="nav-btn" data-target="projects">Projects</button>
+      <button class="nav-btn" data-target="skills">Skills</button>
+      <button class="nav-btn" data-target="experience">Experience</button>
+      <button class="nav-btn" data-target="achievements">Achievements</button>
+      <button class="nav-btn" data-target="blog">Blog</button>
+      <button class="nav-btn" data-target="contact">Contact</button>
+      <button class="nav-btn" data-target="customSections">Custom Sections</button>
+      <button class="nav-btn" data-target="layout">Page Layout</button>
+      <button class="nav-btn" data-target="theme">Theme</button>
+    </aside>
 
-    <div class="nav-section">Customize</div>
-    <button onclick="showSection('customSections')">✨ Custom Sections</button>
-    <button onclick="showSection('pageLayout')">📐 Page Layout</button>
+    <main class="editor">
+      <section id="panel-overview" class="panel active">
+        <h2>Overview</h2>
+        <p>Edit content and click <b>Save Changes</b>. The preview iframe refreshes after save.</p>
+      </section>
 
-    <div class="nav-section">System</div>
-    <button onclick="showSection('users')">👥 User Management</button>
-    <button onclick="showSection('server')">📟 Server Console</button>
-    <button onclick="showSection('settings')">⚙️ Settings</button>
-
-    <div class="flex-spacer"></div>
-    <button onclick="window.open('/', '_blank')" class="preview-btn preview-btn--block">👁️ Preview Site</button>
-    <button onclick="logout()" class="logout-btn">🚪 LOGOUT</button>
-  </aside>
-
-  <main id="admin-root">
-    <!-- Dashboard -->
-    <div id="dashboard" class="section-editor active">
-      <header>
-        <h1 id="page-title">Dashboard</h1>
-        <div class="header-actions">
-          <span class="header-welcome">Welcome back, Admin!</span>
+      <section id="panel-hero" class="panel">
+        <h2>Hero</h2>
+        <div class="grid-2">
+          <label>Title Prefix<input id="hero-titlePrefix" type="text" /></label>
+          <label>Title Suffix<input id="hero-titleSuffix" type="text" /></label>
+          <label>Subtitle<input id="hero-subtitle" type="text" /></label>
+          <label>Description<textarea id="hero-description"></textarea></label>
         </div>
-      </header>
+        <h3>Focus List</h3>
+        <div id="hero-focus-list-editor"></div>
+        <button type="button" id="add-focus-btn">Add Focus Item</button>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">🚀</div>
-          <div class="stat-value" id="stat-projects">0</div>
-          <div class="stat-label">Projects</div>
+        <h3>Hero Buttons</h3>
+        <div id="hero-buttons-editor"></div>
+        <button type="button" id="add-hero-button-btn">Add Hero Button</button>
+      </section>
+
+      <section id="panel-about" class="panel">
+        <h2>About</h2>
+        <label>Paragraph 1<textarea id="about-p1"></textarea></label>
+        <label>Paragraph 2<textarea id="about-p2"></textarea></label>
+        <label>Enjoy List (one per line)<textarea id="about-enjoyList"></textarea></label>
+        <label>Apart List (one per line)<textarea id="about-apartList"></textarea></label>
+      </section>
+
+      <section id="panel-projects" class="panel">
+        <h2>Projects</h2>
+        <div id="projects-editor"></div>
+        <button type="button" id="add-project-btn">Add Project</button>
+      </section>
+
+      <section id="panel-skills" class="panel">
+        <h2>Skills</h2>
+        <div id="skills-editor"></div>
+        <button type="button" id="add-skill-btn">Add Skill Category</button>
+      </section>
+
+      <section id="panel-experience" class="panel">
+        <h2>Experience</h2>
+        <div id="experience-editor"></div>
+        <button type="button" id="add-experience-btn">Add Experience Entry</button>
+      </section>
+
+      <section id="panel-achievements" class="panel">
+        <h2>Achievements</h2>
+        <div id="achievements-editor"></div>
+        <button type="button" id="add-achievement-btn">Add Achievement</button>
+      </section>
+
+      <section id="panel-blog" class="panel">
+        <h2>Blog</h2>
+        <div id="blog-editor"></div>
+        <button type="button" id="add-blog-btn">Add Blog Post</button>
+      </section>
+
+      <section id="panel-contact" class="panel">
+        <h2>Contact</h2>
+        <div class="grid-2">
+          <label>Title<input id="contact-title" type="text" /></label>
+          <label>Subtitle<input id="contact-subtitle" type="text" /></label>
+          <label>Email<input id="contact-email" type="email" /></label>
+          <label>Phone<input id="contact-phone" type="text" /></label>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">📝</div>
-          <div class="stat-value" id="stat-blog">0</div>
-          <div class="stat-label">Blog Posts</div>
+        <h3>Social Links</h3>
+        <div id="socials-editor"></div>
+        <button type="button" id="add-social-btn">Add Social Link</button>
+      </section>
+
+      <section id="panel-customSections" class="panel">
+        <h2>Custom Sections</h2>
+        <div id="custom-sections-editor"></div>
+        <button type="button" id="add-custom-section-btn">Add Custom Section</button>
+      </section>
+
+      <section id="panel-layout" class="panel">
+        <h2>Page Layout (sectionOrder)</h2>
+        <div id="layout-editor"></div>
+      </section>
+
+      <section id="panel-theme" class="panel">
+        <h2>Theme</h2>
+        <div class="grid-2">
+          <label>Primary<input id="theme-primary" type="color" /></label>
+          <label>Secondary<input id="theme-secondary" type="color" /></label>
+          <label>Background<input id="theme-bg" type="color" /></label>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">👁️</div>
-          <div class="stat-value" id="stat-views">0</div>
-          <div class="stat-label">Total Views</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🛠️</div>
-          <div class="stat-value" id="stat-skills">0</div>
-          <div class="stat-label">Skills</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🔗</div>
-          <div class="stat-value" id="stat-socials">0</div>
-          <div class="stat-label">Social Links</div>
-        </div>
-      </div>
+      </section>
+    </main>
 
-      <h3 class="section-heading">Quick Actions</h3>
-      <div class="quick-actions">
-        <button class="quick-btn" type="button" data-action="addProject" data-target-section="projects">➕ Add Project</button>
-        <button class="quick-btn" onclick="showSection('blog'); addBlogPost();">➕ Add Blog Post</button>
-        <button class="quick-btn" onclick="showSection('hero');">✏️ Edit Hero</button>
-        <button class="quick-btn" onclick="window.open('/', '_blank');">👁️ View Site</button>
-      </div>
-
-      <div class="activity-feed">
-        <h3>📋 Content Overview</h3>
-        <div class="activity-item"><span class="activity-dot"></span> Hero Section configured</div>
-        <div class="activity-item"><span class="activity-dot"></span> About page content ready</div>
-        <div class="activity-item"><span class="activity-dot"></span> <span id="overview-projects">0</span>
-          projects listed</div>
-        <div class="activity-item"><span class="activity-dot"></span> <span id="overview-blog">0</span> blog
-          posts published</div>
-        <div class="activity-item"><span class="activity-dot"></span> Contact info configured</div>
-      </div>
-    </div>
-
-    <!-- Hero -->
-    <div id="hero" class="section-editor">
-      <header>
-        <h1>Hero Section</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div class="form-group"><label>Title Prefix</label><input type="text" id="hero-titlePrefix"
-          placeholder="Hi, I'm..."></div>
-      <div class="form-group"><label>Title Suffix (Emoji)</label><input type="text" id="hero-titleSuffix"
-          placeholder="👋"></div>
-      <div class="form-group"><label>Subtitle / Tagline</label><input type="text" id="hero-subtitle"
-          placeholder="Your tagline here..."></div>
-      <div class="form-group"><label>Description</label><textarea id="hero-description"
-          placeholder="Brief intro about yourself..."></textarea></div>
-      <div class="form-group"><label>Focus List (One item per line)</label><textarea id="hero-focusList"
-          placeholder="What you're focused on..."></textarea></div>
-    </div>
-
-    <!-- About -->
-    <div id="about" class="section-editor">
-      <header>
-        <h1>About Section</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div class="form-group"><label>Opening Paragraph</label><textarea id="about-p1"></textarea></div>
-      <div class="form-group"><label>Second Paragraph</label><textarea id="about-p2"></textarea></div>
-      <div class="form-group"><label>"I Enjoy" List (One per line)</label><textarea
-          id="about-enjoyList"></textarea></div>
-      <div class="form-group"><label>"What Sets Me Apart" List (One per line)</label><textarea
-          id="about-apartList"></textarea></div>
-    </div>
-
-    <!-- Projects -->
-    <div id="projects" class="section-editor">
-      <header>
-        <h1>Projects</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div id="projects-list"></div>
-      <button class="add-btn" id="addProjectBtn" type="button" data-action="addProject">➕ Add New Project</button>
-    </div>
-
-    <!-- Skills -->
-    <div id="skills" class="section-editor">
-      <header>
-        <h1>Skills</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div id="skills-list"></div>
-      <button class="add-btn" id="addSkillBtn" type="button" data-action="addSkill">➕ Add Skill Category</button>
-    </div>
-
-    <!-- Experience -->
-    <div id="experience" class="section-editor">
-      <header>
-        <h1>Experience</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div id="experience-list"></div>
-      <button class="add-btn" id="addExperienceBtn" type="button" data-action="addExperience">➕ Add Experience</button>
-    </div>
-
-    <!-- Achievements -->
-    <div id="achievements" class="section-editor">
-      <header>
-        <h1>Achievements</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div class="form-group"><label>Achievement Items (One per line)</label><textarea id="achievements-items"
-          class="tall-textarea"></textarea></div>
-    </div>
-
-    <!-- Blog -->
-    <div id="blog" class="section-editor">
-      <header>
-        <h1>Blog Posts</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div id="blog-list"></div>
-      <button class="add-btn" id="addBlogPostBtn" type="button" data-action="addBlogPost">➕ Add New Post</button>
-    </div>
-
-    <!-- Contact -->
-    <div id="contact" class="section-editor">
-      <header>
-        <h1>Contact Info</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <div class="form-group"><label>Section Title</label><input type="text" id="contact-title"></div>
-      <div class="form-group"><label>Subtitle</label><input type="text" id="contact-subtitle"></div>
-      <div class="form-group"><label>Email Address</label><input type="email" id="contact-email"></div>
-      <h3 class="section-heading section-heading--spaced">Social Links</h3>
-      <div id="socials-list"></div>
-      <button class="add-btn" id="addSocialBtn" type="button" data-action="addSocial">➕ Add Social Link</button>
-    </div>
-
-    <!-- Custom Sections -->
-    <div id="customSections" class="section-editor">
-      <header>
-        <h1>Custom Sections</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <p class="section-muted">Create your own custom content blocks that appear on your website. Each block has a
-        title, content, and you can choose its style.</p>
-      <div id="custom-sections-list"></div>
-      <button class="add-btn" onclick="addCustomSection()">➕ Add Custom Section</button>
-    </div>
-
-    <!-- Page Layout -->
-    <div id="pageLayout" class="section-editor">
-      <header>
-        <h1>Page Layout</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save Changes</button>
-      </header>
-      <p class="section-muted">Drag sections to reorder them on your website. Your custom sections will appear in the
-        order you set here.</p>
-      <div id="section-order-list" class="section-order"></div>
-    </div>
-
-    <!-- Users -->
-    <div id="users" class="section-editor">
-      <header>
-        <h1>User Management</h1>
-        <button class="save-btn" onclick="renderUsers()">🔄 Refresh</button>
-      </header>
-      <div class="glass-card table-card">
-        <table class="users-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-table-body">
-            <!-- Users will be loaded here -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Server Console Section -->
-    <section id="server-section" class="section-editor">
-      <header>
-        <h1>Live Server Logs</h1>
-        <div class="header-actions header-actions--compact">
-          <button class="quick-btn quick-btn--compact" onclick="fetchLogs()">🔄 Refresh</button>
-          <button class="quick-btn quick-btn--compact" onclick="sendConsoleCommand('clear')">🗑️ Clear Buffer</button>
-        </div>
-      </header>
-
-      <div class="glass-card">
-        <div class="console-wrapper">
-          <div id="server-logs">Initializing console feed...</div>
-          <form onsubmit="handleConsoleSubmit(event)" class="console-input-area">
-            <span class="console-prompt">arya@server:~$</span>
-            <input type="text" id="console-input" placeholder="Type a command (e.g. clear)..." autocomplete="off">
-          </form>
-        </div>
-
-        <p class="console-hint">
-          * Logs are captured in real-time. The console supports basic management commands.
-        </p>
-      </div>
-    </section>
-
-    <!-- Settings Section -->
-    <div id="settings" class="section-editor">
-      <header>
-        <h1>Site Settings</h1>
-        <button class="save-btn" onclick="saveContent()">💾 Save All</button>
-      </header>
-
-      <h3 class="section-title">🎨 Theme Customization</h3>
-      <div class="stats-grid">
-        <div class="form-group">
-          <label>Primary Color</label>
-          <input type="color" id="theme-primary" class="color-input">
-        </div>
-        <div class="form-group">
-          <label>Secondary Color</label>
-          <input type="color" id="theme-secondary" class="color-input">
-        </div>
-        <div class="form-group">
-          <label>Background Color</label>
-          <input type="color" id="theme-bg" class="color-input">
-        </div>
-      </div>
-
-      <h3 class="section-title section-title--spaced">🔒 Security</h3>
-      <div class="form-group">
-        <label>Site Password (Leave empty to disable)</label>
-        <input type="text" id="site-password" placeholder="e.g. arya123" class="narrow-input">
-        <p class="helper-text">This will prompt visitors for a password before they can see your content.</p>
-      </div>
-
-      <h3 class="section-title section-title--spaced">💾 Content Management</h3>
-      <div class="quick-actions">
-        <button class="quick-btn" onclick="exportData()">📥 Export Backup (JSON)</button>
-        <button class="quick-btn quick-btn--danger" onclick="resetAnalytics()">🗑️ Reset View Counter</button>
-      </div>
-    </div>
-  </main>
+    <aside class="preview-pane">
+      <h3>Live Preview</h3>
+      <iframe id="preview-frame" src="/" title="Site preview"></iframe>
+    </aside>
+  </div>
 
   <script type="module" src="/admin/admin.js"></script>
-  <script>
-    const cursorDot = document.querySelector('.cursor-dot');
-    const cursorOutline = document.querySelector('.cursor-outline');
-    const body = document.body;
-
-    if (cursorDot && cursorOutline) {
-      body.classList.add('custom-cursor');
-      window.addEventListener('mousemove', function (e) {
-        cursorDot.style.opacity = '1';
-        cursorOutline.style.opacity = '1';
-        cursorDot.style.left = `${e.clientX}px`;
-        cursorDot.style.top = `${e.clientY}px`;
-        cursorOutline.animate({
-          left: `${e.clientX}px`,
-          top: `${e.clientY}px`
-        }, { duration: 500, fill: "forwards" });
-      });
-    } else {
-      body.classList.remove('custom-cursor');
-    }
-  </script>
 </body>
 </html>

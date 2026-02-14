@@ -22,6 +22,19 @@ async function loadContent() {
         document.querySelector('#hero-desc').innerText = data.hero.description;
 
         const focusList = document.querySelector('#hero-focus-list');
+
+        const heroActions = document.querySelector('.hero-actions');
+        if (heroActions && Array.isArray(data.hero.buttons) && data.hero.buttons.length) {
+            heroActions.innerHTML = data.hero.buttons.map((btn) => `
+                <a href="${btn.link || '#'}" class="action-card">
+                  <span class="action-accent"></span>
+                  <span class="action-content">
+                    <span class="action-title">${btn.text || 'Learn More'}</span>
+                    <span class="action-subtitle">Quick action</span>
+                  </span>
+                </a>`).join('');
+        }
+
         focusList.innerHTML = '';
         data.hero.focusList.forEach(item => {
             focusList.innerHTML += `<li style="margin-bottom: 0.5rem;">➢ ${item}</li>`;
@@ -200,6 +213,9 @@ async function loadContent() {
             </a>`;
         });
 
+        const footerText = document.querySelector('footer p');
+        if (footerText) footerText.textContent = data.footer?.copyright || footerText.textContent;
+
         // Apply Theme
         if (data.theme) {
             document.documentElement.style.setProperty('--color-primary', data.theme.primary);
@@ -254,6 +270,7 @@ async function loadContent() {
 
     } catch (error) {
         console.error('Error loading content:', error);
+        console.warn('Falling back to static markup content due to API failure.');
     }
 
     // Mobile Menu Toggle
